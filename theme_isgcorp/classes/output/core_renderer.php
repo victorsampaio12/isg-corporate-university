@@ -51,12 +51,14 @@ class core_renderer extends \theme_boost\output\core_renderer {
         // Detecta em qual item de menu estamos, pra marcar como "ativo".
         $currenturl = $PAGE->url ? $PAGE->url->out_as_local_url(false) : '';
         $isdashboard = (strpos($currenturl, '/my/') !== false) || (strpos($currenturl, '/index.php') !== false && $currenturl !== '/course/index.php');
-        $istrilhas = (strpos($currenturl, '/local/isgcorp/') !== false);
+        $istrilhas = (strpos($currenturl, '/local/isgcorp/index.php') !== false) || (strpos($currenturl, '/local/isgcorp/view.php') !== false);
+        $iscertificados = (strpos($currenturl, '/local/isgcorp/certificates.php') !== false);
 
         $icons = $this->get_isg_sidebar_icons();
 
         $context = [
             'wwwroot' => $CFG->wwwroot,
+            'logourl' => $this->image_url('brand-mark', 'theme_isgcorp')->out(),
             'sitename' => format_string($PAGE->course->fullname ?? get_string('pluginname', 'theme_isgcorp')),
             'items' => [
                 [
@@ -73,10 +75,9 @@ class core_renderer extends \theme_boost\output\core_renderer {
                 ],
                 [
                     'label' => get_string('navcertificados', 'theme_isgcorp'),
-                    // Placeholder até decidirmos a página de certificados.
-                    'url' => '#',
+                    'url' => $CFG->wwwroot . '/local/isgcorp/certificates.php',
                     'icon' => $icons['certificados'],
-                    'active' => false,
+                    'active' => $iscertificados,
                 ],
             ],
         ];

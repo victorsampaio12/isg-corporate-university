@@ -19,20 +19,9 @@
     * items - array de {label, url, icon, active}
 }}
 <div class="isg-sidebar" id="isg-sidebar">
-    <div class="isg-sidebar-deco" aria-hidden="true">
-        <svg width="160" height="240" viewBox="0 0 160 240" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="#ffffff" stroke-opacity="0.14" stroke-width="9" stroke-linecap="round">
-                <line x1="0" y1="230" x2="60" y2="150"/>
-                <line x1="25" y1="235" x2="90" y2="140"/>
-                <line x1="50" y1="235" x2="110" y2="150"/>
-                <line x1="75" y1="235" x2="125" y2="165"/>
-                <line x1="100" y1="235" x2="140" y2="180"/>
-            </g>
-        </svg>
-    </div>
+    <div class="isg-sidebar-deco" aria-hidden="true"></div>
     <a href="{{wwwroot}}/my/" class="isg-sidebar-brand">
-        <span class="isg-sidebar-brand-mark" aria-hidden="true"></span>
-        <span class="isg-sidebar-brand-text">{{sitename}}</span>
+        <img src="{{logourl}}" alt="{{sitename}}" class="isg-sidebar-brand-mark">
     </a>
     <nav class="isg-sidebar-nav" aria-label="{{#str}}pluginname, theme_isgcorp{{/str}}">
         {{#items}}

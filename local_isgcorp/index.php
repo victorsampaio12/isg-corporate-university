@@ -29,7 +29,9 @@ $PAGE->set_url(new moodle_url('/local/isgcorp/index.php', ['q' => $q, 'cat' => $
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('trilhas', 'local_isgcorp'));
-$PAGE->set_heading(get_string('trilhas', 'local_isgcorp'));
+// Não usamos $PAGE->set_heading() aqui de propósito — o Boost
+// desenharia um <h1> automático em cima do nosso próprio título
+// customizado ("Trilhas de Aprendizagem"), duplicando visualmente.
 
 global $USER;
 

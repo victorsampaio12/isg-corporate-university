@@ -47,9 +47,13 @@ body {
         padding-left: $isg-sidebar-width;
     }
 
-    // O Boost também tem sua própria navbar fixa no topo; como
-    // ainda não a substituímos, deixamos as duas coexistirem por
-    // enquanto (próxima etapa: reestilizar o topbar também).
+    // O Boost também tem sua própria navbar fixa no topo
+    // (bg-white, fixed-top, largura da tela inteira) — sem isso,
+    // ela cobriria o topo da nossa sidebar. Empurramos ela pra
+    // começar depois da sidebar.
+    .navbar.fixed-top {
+        left: $isg-sidebar-width;
+    }
 }
 
 .isg-sidebar-brand {
@@ -69,12 +73,11 @@ body {
 }
 
 .isg-sidebar-brand-mark {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
+    height: 42px;
+    width: auto;
+    max-width: 100%;
     flex-shrink: 0;
-    background-color: rgba(255, 255, 255, 0.15);
-    background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.9) 0 3px, transparent 3px 8px);
+    object-fit: contain;
 }
 
 .isg-sidebar-brand-text {
@@ -98,9 +101,14 @@ body {
     left: 0;
     bottom: 0;
     width: 100%;
+    height: 280px;
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
+    background-image: url('[[pix:theme_isgcorp|sidebar-deco]]');
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    background-size: 180px auto;
 }
 
 .isg-sidebar-link {
@@ -164,6 +172,7 @@ body {
     // telas médias/grandes (pensado pra legibilidade de texto de
     // curso). Como já temos a sidebar controlando a largura útil
     // da página, deixamos o conteúdo ocupar o espaço disponível.
+    .pagelayout-standard #page.drawers .main-inner,
     body.limitedwidth #page.drawers .main-inner,
     body.mediumwidth #page.drawers .main-inner {
         max-width: 100%;
@@ -741,4 +750,161 @@ body {
 
     span:first-child { color: #6b6b6f; }
     span:last-child { font-weight: 700; }
+}
+
+// ---------------------------------------------------------------
+// "Meus certificados" (local_isgcorp/certificates.php)
+// ---------------------------------------------------------------
+.isg-cert-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.isg-cert-card {
+    position: relative;
+    background: #fff;
+    border: 1px solid #e7e5e4;
+    border-left: 4px solid $isg-red-700;
+    border-radius: var(--bs-border-radius, 12px);
+    padding: 18px;
+    padding-bottom: 52px;
+    min-height: 150px;
+}
+
+.isg-cert-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.isg-cert-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: $isg-red-700;
+}
+
+.isg-cert-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: $isg-red-100;
+    color: $isg-red-700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+}
+
+.isg-cert-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    min-height: 40px;
+}
+
+.isg-cert-date {
+    font-size: 12.5px;
+    color: #6b6b6f;
+
+    strong { color: $body-color; }
+}
+
+.isg-cert-download {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f0efee;
+    color: #6b6b6f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+
+    &:hover {
+        background: $isg-red-100;
+        color: $isg-red-700;
+        text-decoration: none;
+    }
+}
+
+.isg-pagination {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.isg-page-link {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #6b6b6f;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+
+    &:hover {
+        background: #f0efee;
+        text-decoration: none;
+    }
+
+    &.active {
+        background: $isg-red-700;
+        color: #fff;
+    }
+}
+
+.isg-cert-hero {
+    background-color: #ffffff;
+    border: 1px solid #e7e5e4;
+    background-image: url('[[pix:theme_isgcorp|cert-hero]]');
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: auto 100%;
+    border-radius: 16px;
+    padding: 32px 40px;
+    margin-bottom: 24px;
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.isg-cert-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: $isg-red-700;
+    margin-bottom: 6px;
+}
+
+.isg-cert-hero-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: $body-color;
+    margin: 0 0 8px;
+    max-width: 480px;
+
+    // A segunda parte do título (depois da vírgula) fica destacada
+    // em vermelho no Figma — feito via <span> dentro da string de
+    // idioma seria mais correto, mas aqui simplificamos deixando o
+    // título inteiro na cor padrão para não travar a tradução.
+}
+
+.isg-cert-hero-subtitle {
+    font-size: 14px;
+    color: #6b6b6f;
+    margin: 0;
+    max-width: 460px;
 }

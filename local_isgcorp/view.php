@@ -27,7 +27,7 @@ $PAGE->set_url(new moodle_url('/local/isgcorp/view.php', ['id' => $id]));
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title(format_string($trilha->name));
-$PAGE->set_heading(format_string($trilha->name));
+// Mesmo motivo do index.php: evitar título duplicado.
 
 global $USER;
 
