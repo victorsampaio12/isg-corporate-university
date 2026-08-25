@@ -1,0 +1,34 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+
+$string['pluginname'] = 'ISG Corp - Painel Início';
+$string['welcometitle'] = 'Bem-vindo(a) à Universidade Corporativa ISG';
+$string['welcomesubtitle'] = 'Aprender hoje, transformar o amanhã.';
+$string['ctatext'] = 'Explorar trilhas';
+$string['continuelearning'] = 'Continue aprendendo';
+$string['emptycourses'] = 'Você ainda não está matriculado em nenhum curso.';
+$string['statusnotstarted'] = 'NÃO INICIADO';
+$string['statusinprogress'] = 'EM ANDAMENTO';
+$string['statuscomplete'] = 'CONCLUÍDO';
+$string['statusunavailable'] = 'SEM RASTREAMENTO';
+$string['concluded'] = 'concluído';
+$string['recommendedtrilhas'] = 'Trilhas recomendadas para você';
+$string['emptytrilhas'] = 'Nenhuma trilha disponível no momento.';
+$string['upcomingevents'] = 'Próximos eventos';
+$string['emptyevents'] = 'Nenhum evento agendado nos próximos dias.';
+$string['viewcalendar'] = 'Ver calendário';
+$string['overallprogress'] = 'Seu progresso geral';
+$string['statactivecourses'] = 'Curso em andamento';
+$string['statactivecoursessub'] = 'Cursos ativos';
+$string['statcertificates'] = 'Certificados conquistados';
+$string['statcertificatessub'] = 'Parabéns pelas conquistas!';
+$string['stathours'] = 'Horas de aprendizagem';
+$string['stathourssub'] = 'Estimativa com base no seu acesso (últimos 90 dias)';
+$string['statpoints'] = 'Total de notas';
+$string['statpointssub'] = 'Soma das notas obtidas nas atividades avaliadas';
+$string['progresspaneltitle'] = 'Progresso';
+$string['overallcompletion'] = 'Conclusão geral';
+$string['emptyprogress'] = 'Ainda não há dados de progresso suficientes pra calcular isso.';
+$string['metrictrilhas'] = 'Trilhas';
+$string['metriccursos'] = 'Cursos';
+$string['metricoutof'] = '{$a->done} de {$a->total} concluído(s)';

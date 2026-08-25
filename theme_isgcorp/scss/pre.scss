@@ -1,0 +1,31 @@
+// theme_isgcorp — variáveis de marca
+// Estas variáveis sobrescrevem as do Bootstrap/Boost ANTES da
+// compilação do SCSS principal, então cores como botões, links
+// e destaques do Moodle já nascem na paleta certa.
+
+// Paleta ISG — cor de marca oficial: #770104.
+$isg-red-900: #4a0002;
+$isg-red-800: #5c0103;
+$isg-red-700: #770104;
+$isg-red-600: #93030a;
+$isg-red-100: #fbe6e5;
+$isg-green:   #1f7a3f;
+
+// Variáveis do Bootstrap que o Boost usa como base de tudo.
+$primary:   $isg-red-700;
+$secondary: #6b6b6f;
+$success:   $isg-green;
+$danger:    #93030a;
+
+$body-bg:   #f7f6f5;
+$body-color: #1c1c1e;
+
+$border-radius:      12px;
+$border-radius-sm:   8px;
+$border-radius-lg:   16px;
+
+$font-family-sans-serif: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+
+// Largura da sidebar customizada — usada em post.scss e no
+// layout override mais adiante.
+$isg-sidebar-width: 220px;

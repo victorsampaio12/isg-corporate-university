@@ -1,0 +1,34 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+
+$string['pluginname'] = 'ISG Corp - Home dashboard';
+$string['welcometitle'] = 'Welcome to ISG Corporate University';
+$string['welcomesubtitle'] = 'Learn today, transform tomorrow.';
+$string['ctatext'] = 'Explore learning paths';
+$string['continuelearning'] = 'Continue learning';
+$string['emptycourses'] = 'You are not enrolled in any course yet.';
+$string['statusnotstarted'] = 'NOT STARTED';
+$string['statusinprogress'] = 'IN PROGRESS';
+$string['statuscomplete'] = 'COMPLETE';
+$string['statusunavailable'] = 'NO TRACKING';
+$string['concluded'] = 'complete';
+$string['recommendedtrilhas'] = 'Learning paths recommended for you';
+$string['emptytrilhas'] = 'No learning paths available right now.';
+$string['upcomingevents'] = 'Upcoming events';
+$string['emptyevents'] = 'No events scheduled in the coming days.';
+$string['viewcalendar'] = 'View calendar';
+$string['overallprogress'] = 'Your overall progress';
+$string['statactivecourses'] = 'Active courses';
+$string['statactivecoursessub'] = 'Enrolled courses';
+$string['statcertificates'] = 'Certificates earned';
+$string['statcertificatessub'] = 'Congrats on your achievements!';
+$string['stathours'] = 'Learning hours';
+$string['stathourssub'] = 'Estimated from your access logs (last 90 days)';
+$string['statpoints'] = 'Total grades';
+$string['statpointssub'] = 'Sum of grades earned on graded activities';
+$string['progresspaneltitle'] = 'Progress';
+$string['overallcompletion'] = 'Overall completion';
+$string['emptyprogress'] = 'Not enough progress data yet to calculate this.';
+$string['metrictrilhas'] = 'Learning paths';
+$string['metriccursos'] = 'Courses';
+$string['metricoutof'] = '{$a->done} of {$a->total} complete';
