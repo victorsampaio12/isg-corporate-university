@@ -82,8 +82,10 @@ dados do banco, use:
    novos detectados (tema, local_isgcorp, bloco).
 2. **Site administration > Appearance > Themes > Theme selector** —
    ativa o tema **ISG Corp**.
-3. No Dashboard (`/my/`), ative o **Edit mode**, clique em **Add a
-   block** e adicione o **ISG Corp - Painel Início**.
+3. O bloco **ISG Corp - Painel Início** passa a ser configurado
+   automaticamente como dashboard padrão do sistema.
+4. O site também passa a exigir login antes de abrir a página
+   inicial, evitando que visitantes vejam a home do aluno.
 
 ### 6. (Opcional) Certificados
 

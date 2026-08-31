@@ -7,7 +7,7 @@
 // (at your option) any later version.
 
 /**
- * Configuration for theme_isgcorp — tema filho do Boost
+ * Configuration for theme_isgcorp - tema filho do Boost
  * para a Universidade Corporativa ISG.
  *
  * @package    theme_isgcorp
@@ -18,31 +18,77 @@
 defined('MOODLE_INTERNAL') || die();
 
 $THEME->name = 'isgcorp';
-
-// Herda tudo do Boost por padrão; só sobrescrevemos o necessário.
 $THEME->parents = ['boost'];
 
 // Onde procurar por overrides de layout e templates deste tema.
 $THEME->layouts = [
-    // Por enquanto reaproveita os layouts do Boost.
-    // Quando criarmos a sidebar customizada, apontamos
-    // 'columns2' (layout padrão logado) para o nosso próprio
-    // arquivo em layout/columns2.php.
+    'base' => [
+        'file' => 'drawers.php',
+        'regions' => [],
+    ],
+    'standard' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+    ],
+    'course' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+        'options' => ['langmenu' => true],
+    ],
+    'coursecategory' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+    ],
+    'incourse' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+    ],
+    'frontpage' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+        'options' => ['nonavbar' => true],
+    ],
+    'admin' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+    ],
+    'mycourses' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+        'options' => ['nonavbar' => true],
+    ],
+    'mydashboard' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+        'options' => ['nonavbar' => true, 'langmenu' => true],
+    ],
+    'mypublic' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+    ],
+    'report' => [
+        'file' => 'drawers.php',
+        'regions' => ['side-pre'],
+        'defaultregion' => 'side-pre',
+    ],
 ];
 
-// SCSS: como o tema gera o CSS final.
 $THEME->scss = function($theme) {
     return theme_isgcorp_get_main_scss_content($theme);
 };
 
-// Permite configurar cor de marca, logo, etc. via settings.php.
 $THEME->usefallback = true;
 $THEME->doctype = 'html5';
-
-// Reaproveita os ícones/JS do Boost.
 $THEME->enable_dock = false;
 $THEME->yuicssmodules = [];
-
-// Diz ao Moodle que este tema pode ser usado tanto no desktop quanto
-// em telas menores (o Boost já cuida do responsivo via Bootstrap).
+$THEME->usescourseindex = false;
 $THEME->rendererfactory = 'theme_overridden_renderer_factory';
