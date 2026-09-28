@@ -80,14 +80,7 @@ class core_renderer extends \theme_boost\output\core_renderer {
         $context = $form->export_for_template($this);
         $context->errorformatted = $this->error_text($context->error);
 
-        $url = $this->get_logo_url();
-        if ($url) {
-            $url = $url->out(false);
-        } else {
-            $url = $this->image_url('brand-mark', 'theme_isgcorp')->out(false);
-        }
-
-        $context->logourl = $url;
+        $context->logourl = $this->image_url('brand-mark', 'theme_isgcorp')->out(false);
         $context->canloginasguest = false;
         $context->smallscreensonly = false;
         $context->sitename = format_string(

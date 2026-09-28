@@ -38,7 +38,13 @@ class trilha_form extends \moodleform {
             'subdirs' => 0,
             'accepted_types' => ['web_image'],
         ];
-        $mform->addElement('filemanager', 'coverimage', get_string('trilhacoverimage', 'local_isgcorp'), null, $filemanageroptions);
+        $mform->addElement(
+            'filemanager',
+            'coverimage_filemanager',
+            get_string('trilhacoverimage', 'local_isgcorp'),
+            null,
+            $filemanageroptions
+        );
 
         $categories = [
             '' => get_string('categorianenhuma', 'local_isgcorp'),

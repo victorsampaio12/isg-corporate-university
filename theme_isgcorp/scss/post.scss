@@ -76,10 +76,10 @@ body {
 
 .isg-sidebar-brand-mark {
     display: block;
-    //width: min(168px, 100%);
+    width: min(88px, 100%);
     height: auto;
-    max-width: none;
-    max-height: 52px;
+    max-width: 100%;
+    max-height: none;
     flex-shrink: 0;
     object-fit: contain;
     transform: translateZ(0);
@@ -222,8 +222,8 @@ body {
         }
 
         .drawer.drawer-left.drawer-primary .drawerheader {
-            min-height: 88px;
-            padding: 20px 18px;
+            min-height: 120px;
+            padding: 16px 18px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
@@ -233,22 +233,23 @@ body {
         }
 
         .drawer.drawer-left.drawer-primary .drawerheader .logo {
-            width: auto;
-            max-width: none;
-            max-height: 42px;
+            width: 82px;
+            max-width: 100%;
+            max-height: none;
         }
 
         .drawer.drawer-left.drawer-primary .drawerheader .isg-mobile-drawer-brand {
             display: flex;
             align-items: center;
             width: 100%;
+            justify-content: center;
         }
 
         .drawer.drawer-left.drawer-primary .drawerheader .isg-mobile-drawer-logo {
             display: block;
-            width: auto;
-            max-width: none;
-            max-height: 42px;
+            width: 82px;
+            max-width: 100%;
+            max-height: none;
             object-fit: contain;
         }
 
@@ -342,6 +343,12 @@ body {
     .card-body {
         padding: 0;
     }
+}
+
+// Aproxima o dashboard da topbar sem afetar os demais layouts do Moodle.
+body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
 }
 
 .isg-dashboard {
@@ -519,6 +526,146 @@ body {
 
     &.isg-bar-red-text { color: $isg-red-700; }
     &.isg-bar-green-text { color: $isg-green; }
+}
+
+// Dashboard: cursos e trilhas possuem hierarquias visuais distintas.
+.block_isgcorpdashboard .isg-course-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.block_isgcorpdashboard .isg-dashboard-course-card {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 18px;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 10px;
+    min-height: 100px;
+    padding: 14px;
+    border-radius: 10px;
+}
+
+.isg-dashboard-course-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    color: #fff;
+    background: $isg-red-700;
+    font-size: 17px;
+}
+
+.isg-dashboard-course-content {
+    min-width: 0;
+}
+
+.isg-dashboard-card-arrow {
+    color: #666167;
+    font-size: 25px;
+    line-height: 1;
+    transition: transform 0.18s ease;
+}
+
+.isg-dashboard-course-card:hover .isg-dashboard-card-arrow {
+    transform: translateX(3px);
+}
+
+.block_isgcorpdashboard .isg-dashboard-course-card .isg-course-status {
+    margin-bottom: 2px;
+    color: $isg-red-700;
+    font-size: 9px;
+}
+
+.block_isgcorpdashboard .isg-dashboard-course-card .isg-course-title {
+    margin: 0;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.block_isgcorpdashboard .isg-dashboard-course-card .isg-course-progress-track,
+.block_isgcorpdashboard .isg-dashboard-course-card .isg-course-progress-label {
+    grid-column: 1 / -1;
+}
+
+.block_isgcorpdashboard .isg-dashboard-course-card .isg-course-progress-track {
+    margin: 12px 0 4px;
+    height: 4px;
+}
+
+.block_isgcorpdashboard .isg-dashboard-course-card .isg-course-progress-label {
+    font-size: 10px;
+}
+
+.block_isgcorpdashboard .isg-trilha-grid-compact {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.block_isgcorpdashboard .isg-dashboard-trilha-card {
+    min-width: 0;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.block_isgcorpdashboard .isg-dashboard-trilha-card .isg-trilha-cover {
+    min-height: 92px;
+    height: 92px;
+}
+
+.block_isgcorpdashboard .isg-dashboard-trilha-card .isg-trilha-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 11px 12px 10px;
+}
+
+.block_isgcorpdashboard .isg-dashboard-trilha-card .isg-trilha-title {
+    margin-bottom: 4px;
+    font-size: 12.5px;
+    line-height: 1.25;
+}
+
+.block_isgcorpdashboard .isg-dashboard-trilha-card .isg-trilha-desc {
+    min-height: 31px;
+    margin-bottom: 8px;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.block_isgcorpdashboard .isg-dashboard-trilha-card .isg-trilha-meta {
+    margin-top: auto;
+    font-size: 9.5px;
+}
+
+@media (max-width: 1199.98px) {
+    .block_isgcorpdashboard .isg-course-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .block_isgcorpdashboard .isg-trilha-grid-compact {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .block_isgcorpdashboard .isg-course-grid,
+    .block_isgcorpdashboard .isg-trilha-grid-compact {
+        grid-template-columns: 1fr;
+    }
+
+    .block_isgcorpdashboard .isg-dashboard-course-card {
+        min-height: 96px;
+    }
+
+    .block_isgcorpdashboard .isg-dashboard-trilha-card .isg-trilha-cover {
+        min-height: 150px;
+        height: 150px;
+    }
 }
 
 // ---------------------------------------------------------------
@@ -1878,7 +2025,7 @@ body {
         align-items: center;
         justify-content: center;
         width: calc(100% + 3.5rem);
-        min-height: 94px;
+        min-height: 132px;
         margin: 0 -1.75rem 1.4rem;
         padding: 1.35rem 1.75rem 1.15rem;
         background:
@@ -1889,8 +2036,8 @@ body {
     }
 
     #logoimage {
-        width: auto;
-        max-width: none;
+        width: 92px;
+        max-width: 100%;
         max-height: none;
         filter: drop-shadow(0 6px 14px rgba(24, 10, 14, 0.12));
     }
@@ -2064,10 +2211,14 @@ body {
 
         .login-logo {
             width: calc(100% + 2.4rem);
-            min-height: 86px;
+            min-height: 122px;
             margin: 0 -1.2rem 1.2rem;
             padding: 1.1rem 1.2rem 1rem;
             border-radius: 18px 18px 14px 14px;
+        }
+
+        #logoimage {
+            width: 82px;
         }
     }
 }
@@ -2842,7 +2993,7 @@ body {
     }
 
     .isg-sidebar-brand-mark {
-        width: min(152px, 100%);
-        max-height: 48px;
+        width: min(88px, 100%);
+        max-height: none;
     }
 }

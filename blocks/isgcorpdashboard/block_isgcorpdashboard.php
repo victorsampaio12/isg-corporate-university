@@ -151,10 +151,16 @@ class block_isgcorpdashboard extends block_base {
             $barclass = $this->resolve_progress_bar_class($progressdata['statusclass']);
             $courseurl = $this->resolve_course_target_url($course);
             $barwidth = $percent ?? 0;
+            $iconclasses = ['fa-shield', 'fa-file-excel-o', 'fa-lock', 'fa-user-o'];
+            $iconclass = $iconclasses[((int) $course->id) % count($iconclasses)];
 
-            $html .= '<a class="isg-course-card" href="' . $courseurl->out() . '">';
-            $html .=     '<span class="isg-course-status">' . $statuslabel . '</span>';
-            $html .=     '<span class="isg-course-title">' . format_string($course->fullname) . '</span>';
+            $html .= '<a class="isg-course-card isg-dashboard-course-card" href="' . $courseurl->out() . '">';
+            $html .=     '<span class="isg-dashboard-course-icon"><i class="fa ' . $iconclass . '" aria-hidden="true"></i></span>';
+            $html .=     '<span class="isg-dashboard-course-content">';
+            $html .=         '<span class="isg-course-status">' . $statuslabel . '</span>';
+            $html .=         '<span class="isg-course-title">' . format_string($course->fullname) . '</span>';
+            $html .=     '</span>';
+            $html .=     '<span class="isg-dashboard-card-arrow" aria-hidden="true">&rsaquo;</span>';
             $html .=     '<div class="isg-course-progress-track">';
             $html .=         '<div class="isg-course-progress-fill ' . $barclass . '" style="width:' . $barwidth . '%"></div>';
             $html .=     '</div>';
@@ -639,17 +645,21 @@ class block_isgcorpdashboard extends block_base {
         foreach ($trilhas as $trilha) {
             $viewurl = new moodle_url('/local/isgcorp/view.php', ['id' => $trilha->id]);
             $levelstring = get_string('level' . $trilha->level, 'local_isgcorp');
-            $coverurl = local_isgcorp_get_trilha_cover_url($trilha->id);
+            $courses = local_isgcorp_get_trilha_courses((int) $trilha->id);
+            $coverurl = local_isgcorp_get_trilha_visual_url($trilha, $courses);
+            $description = trim(preg_replace('/\s+/', ' ', strip_tags(
+                format_text($trilha->description, $trilha->descriptionformat)
+            )));
 
-            $html .= '<a class="isg-trilha-card" href="' . $viewurl->out() . '">';
+            $html .= '<a class="isg-trilha-card isg-dashboard-trilha-card" href="' . $viewurl->out() . '">';
             if ($coverurl) {
-                $html .= '<div class="isg-trilha-cover" style="background-image:url(' . $coverurl->out() . ')"></div>';
+                $html .= '<div class="isg-trilha-cover" style="background-image:url(' . s($coverurl->out(false)) . ')"></div>';
             } else {
                 $html .= '<div class="isg-trilha-cover isg-trilha-cover-' . (($trilha->id % 5) + 1) . '"></div>';
             }
             $html .=     '<div class="isg-trilha-body">';
             $html .=         '<div class="isg-trilha-title">' . format_string($trilha->name) . '</div>';
-            $html .=         '<div class="isg-trilha-desc">' . format_text($trilha->description, $trilha->descriptionformat) . '</div>';
+            $html .=         '<div class="isg-trilha-desc">' . s($description) . '</div>';
             $html .=         '<div class="isg-trilha-meta">';
             $html .=             '<span>' . $levelstring . '</span>';
             $html .=             '<span>&#9201; ' . $trilha->estimatedhours . 'h</span>';
