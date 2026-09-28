@@ -56,6 +56,7 @@ class block_isgcorpdashboard extends block_base {
         }
 
         require_once($CFG->dirroot . '/calendar/lib.php');
+        $this->ensure_local_isgcorp_loaded();
 
         $this->content = new stdClass();
         $this->content->footer = '';
@@ -74,15 +75,43 @@ class block_isgcorpdashboard extends block_base {
     }
 
     /**
+     * Carrega o lib.php do plugin local quando ele estiver disponivel.
+     *
+     * O bloco usa varias funcoes procedurais do local_isgcorp para
+     * montar URLs e progresso. Sem esse require explicito, o bloco
+     * pode cair de forma intermitente no fallback padrao do Moodle.
+     *
+     * @return bool
+     */
+    protected function ensure_local_isgcorp_loaded(): bool {
+        global $CFG;
+
+        if (function_exists('local_isgcorp_get_trilhas')) {
+            return true;
+        }
+
+        $libpath = $CFG->dirroot . '/local/isgcorp/lib.php';
+        if (!is_readable($libpath)) {
+            return false;
+        }
+
+        require_once($libpath);
+
+        return function_exists('local_isgcorp_get_trilhas');
+    }
+
+    /**
      * Banner de boas-vindas.
      */
     protected function render_hero(): string {
-        $courseindexurl = new moodle_url('/course/index.php');
+        $destinationurl = $this->ensure_local_isgcorp_loaded()
+            ? new moodle_url('/local/isgcorp/index.php')
+            : new moodle_url('/course/index.php');
 
         $html = '<div class="isg-hero">';
         $html .=     '<h1>' . get_string('welcometitle', 'block_isgcorpdashboard') . '</h1>';
         $html .=     '<p>' . get_string('welcomesubtitle', 'block_isgcorpdashboard') . '</p>';
-        $html .=     '<a class="isg-hero-cta" href="' . $courseindexurl->out() . '">';
+        $html .=     '<a class="isg-hero-cta" href="' . $destinationurl->out() . '">';
         $html .=         get_string('ctatext', 'block_isgcorpdashboard') . ' &rarr;';
         $html .=     '</a>';
         $html .= '</div>';
@@ -116,36 +145,22 @@ class block_isgcorpdashboard extends block_base {
         $html .= '<div class="isg-course-grid">';
 
         foreach ($courses as $course) {
-            $percent = null;
-            try {
-                $percent = \core_completion\progress::get_course_progress_percentage($course, $USER->id);
-            } catch (\Throwable $e) {
-                $percent = null;
-            }
-            if ($percent !== null) {
-                $percent = (int) round($percent);
-            }
-
-            if ($percent === null) {
-                $statuslabel = get_string('statusunavailable', 'block_isgcorpdashboard');
-                $barclass = 'isg-bar-gray';
-            } else if ($percent <= 0) {
-                $statuslabel = get_string('statusnotstarted', 'block_isgcorpdashboard');
-                $barclass = 'isg-bar-gray';
-            } else if ($percent < 100) {
-                $statuslabel = get_string('statusinprogress', 'block_isgcorpdashboard');
-                $barclass = 'isg-bar-red';
-            } else {
-                $statuslabel = get_string('statuscomplete', 'block_isgcorpdashboard');
-                $barclass = 'isg-bar-green';
-            }
-
-            $courseurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+            $progressdata = $this->resolve_course_progress_data($course, (int) $USER->id);
+            $percent = $progressdata['percent'];
+            $statuslabel = $progressdata['statuslabel'];
+            $barclass = $this->resolve_progress_bar_class($progressdata['statusclass']);
+            $courseurl = $this->resolve_course_target_url($course);
             $barwidth = $percent ?? 0;
+            $iconclasses = ['fa-shield', 'fa-file-excel-o', 'fa-lock', 'fa-user-o'];
+            $iconclass = $iconclasses[((int) $course->id) % count($iconclasses)];
 
-            $html .= '<a class="isg-course-card" href="' . $courseurl->out() . '">';
-            $html .=     '<span class="isg-course-status">' . $statuslabel . '</span>';
-            $html .=     '<span class="isg-course-title">' . format_string($course->fullname) . '</span>';
+            $html .= '<a class="isg-course-card isg-dashboard-course-card" href="' . $courseurl->out() . '">';
+            $html .=     '<span class="isg-dashboard-course-icon"><i class="fa ' . $iconclass . '" aria-hidden="true"></i></span>';
+            $html .=     '<span class="isg-dashboard-course-content">';
+            $html .=         '<span class="isg-course-status">' . $statuslabel . '</span>';
+            $html .=         '<span class="isg-course-title">' . format_string($course->fullname) . '</span>';
+            $html .=     '</span>';
+            $html .=     '<span class="isg-dashboard-card-arrow" aria-hidden="true">&rsaquo;</span>';
             $html .=     '<div class="isg-course-progress-track">';
             $html .=         '<div class="isg-course-progress-fill ' . $barclass . '" style="width:' . $barwidth . '%"></div>';
             $html .=     '</div>';
@@ -159,6 +174,92 @@ class block_isgcorpdashboard extends block_base {
         $html .= '</section>';
 
         return $html;
+    }
+
+    /**
+     * Resolve a URL que o card de curso deve abrir no dashboard.
+     *
+     * @param stdClass $course
+     * @return moodle_url
+     */
+    protected function resolve_course_target_url(stdClass $course): moodle_url {
+        if ($this->ensure_local_isgcorp_loaded() && function_exists('local_isgcorp_get_course_page_url')) {
+            return local_isgcorp_get_course_page_url((int) $course->id);
+        }
+
+        return new moodle_url('/course/view.php', ['id' => $course->id]);
+    }
+
+    /**
+     * Busca o progresso do curso usando a camada customizada quando existir.
+     *
+     * @param stdClass $course
+     * @param int $userid
+     * @return array
+     */
+    protected function resolve_course_progress_data(stdClass $course, int $userid): array {
+        if ($this->ensure_local_isgcorp_loaded() && function_exists('local_isgcorp_get_course_progress_data')) {
+            return local_isgcorp_get_course_progress_data($course, $userid);
+        }
+
+        $percent = null;
+        try {
+            $percent = \core_completion\progress::get_course_progress_percentage($course, $userid);
+        } catch (\Throwable $e) {
+            $percent = null;
+        }
+
+        if ($percent !== null) {
+            $percent = (int) round($percent);
+        }
+
+        if ($percent === null) {
+            return [
+                'percent' => null,
+                'statuslabel' => get_string('statusunavailable', 'block_isgcorpdashboard'),
+                'statusclass' => 'neutral',
+            ];
+        }
+
+        if ($percent <= 0) {
+            return [
+                'percent' => 0,
+                'statuslabel' => get_string('statusnotstarted', 'block_isgcorpdashboard'),
+                'statusclass' => 'neutral',
+            ];
+        }
+
+        if ($percent < 100) {
+            return [
+                'percent' => $percent,
+                'statuslabel' => get_string('statusinprogress', 'block_isgcorpdashboard'),
+                'statusclass' => 'progress',
+            ];
+        }
+
+        return [
+            'percent' => 100,
+            'statuslabel' => get_string('statuscomplete', 'block_isgcorpdashboard'),
+            'statusclass' => 'complete',
+        ];
+    }
+
+    /**
+     * Traduz a classe semantica de status para a barra visual.
+     *
+     * @param string $statusclass
+     * @return string
+     */
+    protected function resolve_progress_bar_class(string $statusclass): string {
+        if ($statusclass === 'complete') {
+            return 'isg-bar-green';
+        }
+
+        if ($statusclass === 'progress') {
+            return 'isg-bar-red';
+        }
+
+        return 'isg-bar-gray';
     }
 
     /**
@@ -356,13 +457,9 @@ class block_isgcorpdashboard extends block_base {
         $coursepercents = [];
 
         foreach ($courses as $course) {
-            try {
-                $percent = \core_completion\progress::get_course_progress_percentage($course, $USER->id);
-            } catch (\Throwable $e) {
-                $percent = null;
-            }
+            $progressdata = $this->resolve_course_progress_data($course, (int) $USER->id);
+            $percent = $progressdata['percent'];
             if ($percent !== null) {
-                $percent = (int) round($percent);
                 $coursepercents[] = $percent;
                 if ($percent >= 100) {
                     $completedcourses++;
@@ -374,7 +471,7 @@ class block_isgcorpdashboard extends block_base {
         // (média de conclusão dos cursos que a compõem).
         $totaltrilhas = 0;
         $completedtrilhas = 0;
-        if (function_exists('local_isgcorp_get_trilhas')) {
+        if ($this->ensure_local_isgcorp_loaded()) {
             $trilhas = local_isgcorp_get_trilhas(true);
             $totaltrilhas = count($trilhas);
             foreach ($trilhas as $trilha) {
@@ -527,7 +624,7 @@ class block_isgcorpdashboard extends block_base {
      * de quebrar a página inteira.
      */
     protected function render_trilhas(): string {
-        if (!function_exists('local_isgcorp_get_trilhas')) {
+        if (!$this->ensure_local_isgcorp_loaded()) {
             return '';
         }
 
@@ -548,17 +645,21 @@ class block_isgcorpdashboard extends block_base {
         foreach ($trilhas as $trilha) {
             $viewurl = new moodle_url('/local/isgcorp/view.php', ['id' => $trilha->id]);
             $levelstring = get_string('level' . $trilha->level, 'local_isgcorp');
-            $coverurl = local_isgcorp_get_trilha_cover_url($trilha->id);
+            $courses = local_isgcorp_get_trilha_courses((int) $trilha->id);
+            $coverurl = local_isgcorp_get_trilha_visual_url($trilha, $courses);
+            $description = trim(preg_replace('/\s+/', ' ', strip_tags(
+                format_text($trilha->description, $trilha->descriptionformat)
+            )));
 
-            $html .= '<a class="isg-trilha-card" href="' . $viewurl->out() . '">';
+            $html .= '<a class="isg-trilha-card isg-dashboard-trilha-card" href="' . $viewurl->out() . '">';
             if ($coverurl) {
-                $html .= '<div class="isg-trilha-cover" style="background-image:url(' . $coverurl->out() . ')"></div>';
+                $html .= '<div class="isg-trilha-cover" style="background-image:url(' . s($coverurl->out(false)) . ')"></div>';
             } else {
                 $html .= '<div class="isg-trilha-cover isg-trilha-cover-' . (($trilha->id % 5) + 1) . '"></div>';
             }
             $html .=     '<div class="isg-trilha-body">';
             $html .=         '<div class="isg-trilha-title">' . format_string($trilha->name) . '</div>';
-            $html .=         '<div class="isg-trilha-desc">' . format_text($trilha->description, $trilha->descriptionformat) . '</div>';
+            $html .=         '<div class="isg-trilha-desc">' . s($description) . '</div>';
             $html .=         '<div class="isg-trilha-meta">';
             $html .=             '<span>' . $levelstring . '</span>';
             $html .=             '<span>&#9201; ' . $trilha->estimatedhours . 'h</span>';
