@@ -122,26 +122,15 @@ if ($completed) {
 echo $OUTPUT->header();
 
 echo '<div class="isg-learner-page isg-lesson-page">';
-echo     '<nav class="isg-learner-breadcrumbs">';
-if ($trilha) {
-    echo     '<a href="' . (new moodle_url('/local/isgcorp/view.php', ['id' => $trilha->id, 'tab' => 'content']))->out() . '">' . s(format_string($trilha->name)) . '</a>';
-    echo     '<span>/</span>';
-}
-echo         '<a href="' . $backurl->out() . '">' . s(format_string($course->fullname)) . '</a>';
-echo         '<span>/</span>';
-echo         '<span>' . s($currentlesson['name']) . '</span>';
-echo     '</nav>';
-
+echo     '<a class="isg-back-link" href="' . $backurl->out() . '">&larr; ' . get_string('backtomodule', 'local_isgcorp') . '</a>';
 echo     '<div class="isg-lesson-layout">';
 echo         '<main class="isg-lesson-main">';
-echo             '<a class="isg-back-link" href="' . $backurl->out() . '">&larr; ' . get_string('backtomodule', 'local_isgcorp') . '</a>';
-
 echo             '<section class="isg-lesson-hero">';
 echo                 '<div class="isg-lesson-hero-icon">&#9654;</div>';
 echo                 '<div class="isg-lesson-hero-copy">';
 echo                     '<h1 class="isg-lesson-title">' . s($currentlesson['name']) . '</h1>';
 echo                     '<div class="isg-lesson-meta">';
-echo                         '<span>' . s($currentlesson['contentlabel']) . '</span>';
+echo                         '<span class="isg-content-type-pill">' . s($currentlesson['contentlabel']) . '</span>';
 echo                         '<span class="isg-status-pill ' . $statusclass . '">' . s($statuslabel) . '</span>';
 echo                     '</div>';
 if ($currentlesson['summaryplain'] !== '') {
@@ -158,12 +147,11 @@ if (empty($contentitems)) {
         $showtitle = trim((string) $item['title']) !== '' && trim((string) $item['title']) !== trim((string) $currentlesson['name']);
 
         echo '<article class="isg-lesson-block">';
-        echo     '<div class="isg-lesson-block-head">';
-        echo         '<span class="isg-lesson-block-type">' . s($item['contentlabel']) . '</span>';
         if ($showtitle) {
+            echo '<div class="isg-lesson-block-head">';
             echo     '<h2 class="isg-lesson-block-title">' . s($item['title']) . '</h2>';
+            echo '</div>';
         }
-        echo     '</div>';
         if (!empty($item['bodyhtml'])) {
             echo     '<div class="isg-lesson-block-body">' . $item['bodyhtml'] . '</div>';
         }

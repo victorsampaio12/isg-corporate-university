@@ -26,6 +26,73 @@ defined('MOODLE_INTERNAL') || die();
 class core_renderer extends \theme_boost\output\core_renderer {
 
     /**
+     * Alunos nao usam notificacoes nem mensagens na experiencia corporativa.
+     *
+     * @return string
+     */
+    public function navbar_plugin_output() {
+        return theme_isgcorp_is_privileged_user() ? parent::navbar_plugin_output() : '';
+    }
+
+    /**
+     * Evita oferecer edicao de dashboard ou perfil para alunos.
+     *
+     * @return string|null
+     */
+    public function edit_switch() {
+        return theme_isgcorp_is_privileged_user() ? parent::edit_switch() : null;
+    }
+
+    /**
+     * Simplifica a pagina de preferencias para alunos.
+     *
+     * @param \core\output\preferences_groups $renderable
+     * @return string
+     */
+    public function render_preferences_groups(\core\output\preferences_groups $renderable) {
+        if (!theme_isgcorp_is_privileged_user()) {
+            $hiddengroups = [
+                get_string('blogs', 'blog'),
+                get_string('badges'),
+                get_string('miscellaneous'),
+            ];
+            $allowedpaths = [
+                '/user/edit.php',
+                '/login/change_password.php',
+                '/user/language.php',
+            ];
+
+            $groups = [];
+            foreach ($renderable->groups as $group) {
+                if (in_array($group->title, $hiddengroups, true)) {
+                    continue;
+                }
+
+                $filterednodes = new \navigation_node_collection();
+                foreach ($group->nodes as $node) {
+                    if (empty($node->action)) {
+                        continue;
+                    }
+                    $url = $node->action instanceof \moodle_url
+                        ? $node->action->out_as_local_url(false)
+                        : (string) $node->action;
+                    if (in_array(parse_url($url, PHP_URL_PATH), $allowedpaths, true)) {
+                        $filterednodes->add($node);
+                    }
+                }
+                $group->nodes = $filterednodes;
+
+                if (count($filterednodes) > 0) {
+                    $groups[] = $group;
+                }
+            }
+            $renderable->groups = $groups;
+        }
+
+        return parent::render_preferences_groups($renderable);
+    }
+
+    /**
      * Adiciona uma classe no body so quando a sidebar customizada
      * realmente vai ser renderizada.
      *

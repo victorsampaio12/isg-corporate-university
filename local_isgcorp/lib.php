@@ -138,6 +138,53 @@ function local_isgcorp_get_trilha_progress(int $trilhaid, int $userid): ?int {
 }
 
 /**
+ * Lista as trilhas que o usuario pode cursar.
+ *
+ * Gestores enxergam o catalogo completo. Para alunos, todos os cursos da
+ * trilha precisam estar visiveis e com matricula ativa, evitando apresentar
+ * uma jornada que terminaria em uma tela de acesso bloqueado.
+ *
+ * @param int $userid
+ * @param bool $onlyvisible
+ * @return array
+ */
+function local_isgcorp_get_user_trilhas(int $userid, bool $onlyvisible = true): array {
+    $trilhas = local_isgcorp_get_trilhas($onlyvisible);
+    $systemcontext = \context_system::instance();
+
+    if (is_siteadmin($userid) || has_capability('local/isgcorp:manage', $systemcontext, $userid)) {
+        return $trilhas;
+    }
+
+    return array_filter($trilhas, function($trilha) use ($userid) {
+        $courses = local_isgcorp_get_trilha_courses((int) $trilha->id);
+        if (empty($courses)) {
+            return false;
+        }
+
+        foreach ($courses as $course) {
+            if (empty($course->visible)
+                    || !is_enrolled(\context_course::instance((int) $course->id), $userid, '', true)) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+}
+
+/**
+ * Verifica se uma trilha esta disponivel para o usuario.
+ *
+ * @param int $trilhaid
+ * @param int $userid
+ * @return bool
+ */
+function local_isgcorp_user_can_access_trilha(int $trilhaid, int $userid): bool {
+    return isset(local_isgcorp_get_user_trilhas($userid, true)[$trilhaid]);
+}
+
+/**
  * URL da imagem de capa de uma trilha, se houver uma cadastrada.
  *
  * @param int $trilhaid
@@ -302,7 +349,8 @@ function local_isgcorp_extract_plain_text(string $html, int $maxlen = 0): string
         $html = $cleanhtml;
     }
 
-    $text = trim(preg_replace('/\s+/', ' ', strip_tags($html)));
+    $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = trim(preg_replace('/[\s\x{00A0}]+/u', ' ', $text));
 
     if ($maxlen > 0 && core_text::strlen($text) > $maxlen) {
         return rtrim(core_text::substr($text, 0, $maxlen - 1)) . '...';

@@ -35,6 +35,10 @@ $PAGE->set_title(format_string($trilha->name));
 
 global $USER;
 
+if (!local_isgcorp_user_can_access_trilha((int) $trilha->id, (int) $USER->id)) {
+    throw new required_capability_exception($context, 'moodle/course:view', 'nopermissions', '');
+}
+
 $courses = array_values(local_isgcorp_get_trilha_courses($trilha->id));
 $levelstring = get_string('level' . $trilha->level, 'local_isgcorp');
 $trilhaprogress = local_isgcorp_get_trilha_progress((int) $trilha->id, (int) $USER->id);

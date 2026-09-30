@@ -227,13 +227,30 @@ body {
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
+        .drawer.drawer-left.drawer-primary .drawerheader .drawertoggle {
+            position: relative;
+            z-index: 2;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .drawer.drawer-left.drawer-primary .drawerheader .drawertoggle .icon,
+        .drawer.drawer-left.drawer-primary .drawerheader .drawertoggle svg {
+            color: #fff !important;
+            fill: currentColor;
+        }
+
+        .drawer.drawer-left.drawer-primary .drawerheader .drawertoggle img.icon {
+            filter: brightness(0) invert(1);
+        }
+
         .drawer.drawer-left.drawer-primary .drawerheader a {
             color: #fff;
             text-decoration: none;
         }
 
         .drawer.drawer-left.drawer-primary .drawerheader .logo {
-            width: 82px;
+            width: 100px;
             max-width: 100%;
             max-height: none;
         }
@@ -241,13 +258,16 @@ body {
         .drawer.drawer-left.drawer-primary .drawerheader .isg-mobile-drawer-brand {
             display: flex;
             align-items: center;
+            position: absolute;
+            inset: 0;
+            z-index: 1;
             width: 100%;
             justify-content: center;
         }
 
         .drawer.drawer-left.drawer-primary .drawerheader .isg-mobile-drawer-logo {
             display: block;
-            width: 82px;
+            width: 100px;
             max-width: 100%;
             max-height: none;
             object-fit: contain;
@@ -2242,31 +2262,6 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
     padding: 6px 0 28px;
 }
 
-.isg-learner-breadcrumbs {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-    font-size: 13px;
-    color: #7b7280;
-
-    a {
-        color: $isg-red-700;
-        font-weight: 700;
-        text-decoration: none;
-    }
-
-    a:hover {
-        color: $isg-red-800;
-        text-decoration: none;
-    }
-
-    span:last-child {
-        color: #5b5564;
-    }
-}
-
 .isg-module-primary-btn,
 .isg-module-secondary-btn,
 .isg-module-inline-btn {
@@ -2295,6 +2290,17 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
     text-decoration: none;
     transform: translateY(-1px);
     box-shadow: 0 18px 36px rgba($isg-red-700, 0.24);
+}
+
+.isg-module-primary-btn.is-complete {
+    background: $isg-green;
+    box-shadow: 0 16px 34px rgba(11, 122, 65, 0.18);
+
+    &:hover,
+    &:focus {
+        background: #086b3a;
+        box-shadow: 0 18px 36px rgba(11, 122, 65, 0.24);
+    }
 }
 
 .isg-module-secondary-btn {
@@ -2428,6 +2434,7 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    align-items: center;
 }
 
 .isg-module-pill {
@@ -2650,17 +2657,44 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
     display: flex;
     align-items: flex-start;
     gap: 18px;
-    padding: 26px 28px;
+    padding: 20px 22px;
     border-radius: 24px;
     margin-bottom: 18px;
 }
 
+.isg-lesson-hero-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    font-size: 28px;
+}
+
+.isg-lesson-title {
+    margin-bottom: 8px;
+    font-size: clamp(30px, 3vw, 40px);
+    line-height: 1.08;
+}
+
 .isg-lesson-meta {
-    margin-bottom: 12px;
+    margin-bottom: 0;
+}
+
+.isg-content-type-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba($isg-red-700, 0.1);
+    color: $isg-red-700;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .isg-lesson-content-card {
-    padding: 28px;
+    padding: 20px;
     border-radius: 26px;
 }
 
@@ -2704,7 +2738,7 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
     .plyr {
         width: 100%;
         max-width: 100%;
-        margin: 20px auto 0;
+        margin: 0 auto;
     }
 
     .mediaplugin,
@@ -2734,7 +2768,7 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
         border-radius: 22px;
         background: #120f14;
         box-shadow: 0 20px 44px rgba(16, 12, 18, 0.18);
-        margin: 20px auto 0;
+        margin: 0 auto;
         overflow: hidden;
     }
 
@@ -2917,6 +2951,10 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
             justify-self: center;
         }
 
+        > :last-child {
+            justify-self: center;
+        }
+
         > span:empty {
             display: none;
         }
@@ -2966,6 +3004,10 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
     .isg-module-title,
     .isg-lesson-title {
         font-size: 32px;
+    }
+
+    .isg-lesson-title {
+        font-size: 28px;
     }
 
     .isg-lesson-block-title {

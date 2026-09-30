@@ -55,22 +55,32 @@ if ($summaryhtml === '' && !empty($lessons)) {
 $backurl = $trilha
     ? new moodle_url('/local/isgcorp/view.php', ['id' => $trilha->id, 'tab' => 'content'])
     : new moodle_url('/local/isgcorp/index.php');
-$primaryurl = !empty($lessons) ? $lessons[0]['url'] : new moodle_url('/course/view.php', ['id' => $course->id]);
 $progresspercent = $progress['percent'] ?? ($courseprogress['percent'] ?? 0);
 $completedlessons = $progress['completed'] ?? 0;
 $totallessons = $progress['total'] ?? count($lessons);
+$coursecompleted = $progresspercent >= 100;
+$primaryurl = !empty($lessons) ? $lessons[0]['url'] : new moodle_url('/course/view.php', ['id' => $course->id]);
+
+if (!$coursecompleted) {
+    foreach ($lessons as $lesson) {
+        if (empty($lesson['completed'])) {
+            $primaryurl = $lesson['url'];
+            break;
+        }
+    }
+}
+
+if ($coursecompleted) {
+    $primarylabel = get_string('coursecompletedcta', 'local_isgcorp');
+} else if ($progresspercent > 0) {
+    $primarylabel = get_string('continuecourse', 'local_isgcorp');
+} else {
+    $primarylabel = get_string('startmodule', 'local_isgcorp');
+}
 
 echo $OUTPUT->header();
 
 echo '<div class="isg-learner-page isg-course-page">';
-echo     '<nav class="isg-learner-breadcrumbs">';
-if ($trilha) {
-    echo     '<a href="' . $backurl->out() . '">' . s(format_string($trilha->name)) . '</a>';
-    echo     '<span>/</span>';
-}
-echo         '<span>' . s(format_string($course->fullname)) . '</span>';
-echo     '</nav>';
-
 echo     '<section class="isg-module-hero">';
 echo         '<div class="isg-module-hero-main">';
 echo             '<div class="isg-module-hero-icon">&#128640;</div>';
@@ -84,7 +94,8 @@ echo                     '<span class="isg-module-pill">&#128196; ' . ($totalles
 echo                     '<span class="isg-module-pill">&#128202; ' . ($progresspercent ?: 0) . '%</span>';
 echo                 '</div>';
 echo                 '<div class="isg-module-actions">';
-echo                     '<a class="isg-module-primary-btn" href="' . $primaryurl->out() . '">' . s(get_string('startmodule', 'local_isgcorp')) . ' &rarr;</a>';
+$primaryicon = $coursecompleted ? ' &#10003;' : ' &rarr;';
+echo                     '<a class="isg-module-primary-btn' . ($coursecompleted ? ' is-complete' : '') . '" href="' . $primaryurl->out() . '">' . s($primarylabel) . $primaryicon . '</a>';
 echo                     '<a class="isg-module-secondary-btn" href="' . $backurl->out() . '">' . s(get_string('backtotrail', 'local_isgcorp')) . '</a>';
 echo                 '</div>';
 echo             '</div>';
