@@ -1270,6 +1270,15 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
         text-decoration: none;
         background: $isg-red-900;
     }
+
+    &.is-complete {
+        background: $isg-green;
+        box-shadow: 0 14px 24px rgba(11, 122, 65, 0.18);
+
+        &:hover {
+            background: #086b3a;
+        }
+    }
 }
 
 .isg-trilha-hero-progress {
