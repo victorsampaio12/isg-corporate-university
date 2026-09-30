@@ -472,7 +472,7 @@ class block_isgcorpdashboard extends block_base {
         $totaltrilhas = 0;
         $completedtrilhas = 0;
         if ($this->ensure_local_isgcorp_loaded()) {
-            $trilhas = local_isgcorp_get_trilhas(true);
+            $trilhas = local_isgcorp_get_user_trilhas((int) $USER->id, true);
             $totaltrilhas = count($trilhas);
             foreach ($trilhas as $trilha) {
                 $tprogress = local_isgcorp_get_trilha_progress($trilha->id, $USER->id);
@@ -624,11 +624,13 @@ class block_isgcorpdashboard extends block_base {
      * de quebrar a página inteira.
      */
     protected function render_trilhas(): string {
+        global $USER;
+
         if (!$this->ensure_local_isgcorp_loaded()) {
             return '';
         }
 
-        $trilhas = local_isgcorp_get_trilhas(true);
+        $trilhas = local_isgcorp_get_user_trilhas((int) $USER->id, true);
         $trilhas = array_slice($trilhas, 0, self::MAXTRILHAS, true);
 
         $html = '<section class="isg-section">';

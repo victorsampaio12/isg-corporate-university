@@ -91,6 +91,9 @@ if (!$hidesecondarynavigation && $PAGE->has_secondary_navigation()) {
 $primary = new core\navigation\output\primary($PAGE);
 $renderer = $PAGE->get_renderer('core');
 $primarymenu = $primary->export_for_template($renderer);
+if (function_exists('theme_isgcorp_filter_student_user_menu')) {
+    $primarymenu['user'] = theme_isgcorp_filter_student_user_menu($primarymenu['user']);
+}
 $currenturl = $PAGE->url ? $PAGE->url->out_as_local_url(false) : '';
 $mobileprimarynav = $primarymenu['mobileprimarynav'];
 if (function_exists('theme_isgcorp_get_mobile_primary_nav') && isloggedin() && !isguestuser()) {
@@ -101,6 +104,10 @@ $buildregionmainsettings = !$hidefullheader
     && !$PAGE->include_region_main_settings_in_header_actions()
     && !$secondarynavigation;
 $regionmainsettingsmenu = $buildregionmainsettings ? $OUTPUT->region_main_settings_menu() : false;
+
+if (!theme_isgcorp_is_privileged_user() && $PAGE->pagetype === 'user-profile') {
+    $PAGE->set_button('');
+}
 
 $header = $PAGE->activityheader;
 $headercontent = $header->export_for_template($renderer);

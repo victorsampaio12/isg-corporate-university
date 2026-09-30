@@ -17,6 +17,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
+ * Indica se o usuario precisa das ferramentas administrativas do tema.
+ *
+ * @return bool
+ */
+function theme_isgcorp_is_privileged_user(): bool {
+    return is_siteadmin()
+        || has_capability('local/isgcorp:manage', \context_system::instance());
+}
+
+/**
  * Monta o SCSS completo do tema.
  *
  * @param theme_config $theme
@@ -148,6 +158,45 @@ function theme_isgcorp_get_mobile_primary_nav(string $currenturl = ''): array {
  */
 function theme_isgcorp_should_show_blockdrawer(): bool {
     return isloggedin() && !isguestuser() && is_siteadmin();
+}
+
+/**
+ * Mantem no menu do aluno apenas os atalhos essenciais.
+ *
+ * @param array $usermenu
+ * @return array
+ */
+function theme_isgcorp_filter_student_user_menu(array $usermenu): array {
+    if (theme_isgcorp_is_privileged_user() || empty($usermenu['items'])) {
+        return $usermenu;
+    }
+
+    $allowedpaths = [
+        '/user/profile.php',
+        '/user/preferences.php',
+        '/login/logout.php',
+    ];
+
+    $items = array_filter($usermenu['items'], function($item) use ($allowedpaths) {
+        if (!empty($item->submenulink)) {
+            return true;
+        }
+        if (empty($item->url)) {
+            return false;
+        }
+
+        $url = $item->url instanceof \moodle_url ? $item->url->out_as_local_url(false) : (string) $item->url;
+        $path = parse_url($url, PHP_URL_PATH);
+        return in_array($path, $allowedpaths, true);
+    });
+
+    $usermenu['items'] = array_values($items);
+    if (!empty($usermenu['items'])) {
+        $lastindex = count($usermenu['items']) - 1;
+        $usermenu['items'][$lastindex]->divider = true;
+    }
+
+    return $usermenu;
 }
 
 /**

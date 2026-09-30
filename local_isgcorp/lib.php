@@ -138,6 +138,53 @@ function local_isgcorp_get_trilha_progress(int $trilhaid, int $userid): ?int {
 }
 
 /**
+ * Lista as trilhas que o usuario pode cursar.
+ *
+ * Gestores enxergam o catalogo completo. Para alunos, todos os cursos da
+ * trilha precisam estar visiveis e com matricula ativa, evitando apresentar
+ * uma jornada que terminaria em uma tela de acesso bloqueado.
+ *
+ * @param int $userid
+ * @param bool $onlyvisible
+ * @return array
+ */
+function local_isgcorp_get_user_trilhas(int $userid, bool $onlyvisible = true): array {
+    $trilhas = local_isgcorp_get_trilhas($onlyvisible);
+    $systemcontext = \context_system::instance();
+
+    if (is_siteadmin($userid) || has_capability('local/isgcorp:manage', $systemcontext, $userid)) {
+        return $trilhas;
+    }
+
+    return array_filter($trilhas, function($trilha) use ($userid) {
+        $courses = local_isgcorp_get_trilha_courses((int) $trilha->id);
+        if (empty($courses)) {
+            return false;
+        }
+
+        foreach ($courses as $course) {
+            if (empty($course->visible)
+                    || !is_enrolled(\context_course::instance((int) $course->id), $userid, '', true)) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+}
+
+/**
+ * Verifica se uma trilha esta disponivel para o usuario.
+ *
+ * @param int $trilhaid
+ * @param int $userid
+ * @return bool
+ */
+function local_isgcorp_user_can_access_trilha(int $trilhaid, int $userid): bool {
+    return isset(local_isgcorp_get_user_trilhas($userid, true)[$trilhaid]);
+}
+
+/**
  * URL da imagem de capa de uma trilha, se houver uma cadastrada.
  *
  * @param int $trilhaid
@@ -291,7 +338,19 @@ function local_isgcorp_extract_plain_text(string $html, int $maxlen = 0): string
         $html = $cleanhtml;
     }
 
-    $text = trim(preg_replace('/\s+/', ' ', strip_tags($html)));
+    // Arquivos de mídia são conteúdo, não uma descrição legível da aula.
+    $cleanhtml = preg_replace('/<(video|audio)\b[^>]*>.*?<\/\1>/is', '', $html);
+    if ($cleanhtml !== null) {
+        $html = $cleanhtml;
+    }
+
+    $cleanhtml = preg_replace('/@@PLUGINFILE@@\/[^\s<]+/iu', '', $html);
+    if ($cleanhtml !== null) {
+        $html = $cleanhtml;
+    }
+
+    $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = trim(preg_replace('/[\s\x{00A0}]+/u', ' ', $text));
 
     if ($maxlen > 0 && core_text::strlen($text) > $maxlen) {
         return rtrim(core_text::substr($text, 0, $maxlen - 1)) . '...';
@@ -407,7 +466,11 @@ function local_isgcorp_set_lesson_completion(
 function local_isgcorp_get_content_kind_label(string $modname, string $bodyhtml = '', ?string $actionurl = null): string {
     $haystack = core_text::strtolower($bodyhtml . ' ' . ($actionurl ?? ''));
 
-    if (strpos($haystack, 'youtube.com') !== false || strpos($haystack, 'youtu.be') !== false || strpos($haystack, 'vimeo.com') !== false) {
+    if (strpos($haystack, '<video') !== false
+        || strpos($haystack, 'youtube.com') !== false
+        || strpos($haystack, 'youtu.be') !== false
+        || strpos($haystack, 'vimeo.com') !== false
+        || preg_match('/\.(mp4|webm|ogv|mov)(?:[?&#"\']|$)/i', $haystack)) {
         return get_string('contenttypevideo', 'local_isgcorp');
     }
 
@@ -470,42 +533,61 @@ function local_isgcorp_get_course_module_content_item(\stdClass $course, \cm_inf
     switch ($cm->modname) {
         case 'label':
             $record = $DB->get_record('label', ['id' => $cm->instance], 'id, intro, introformat', MUST_EXIST);
-            $bodyhtml = format_text($record->intro, $record->introformat, ['context' => $cm->context]);
+            $bodyhtml = format_module_intro('label', $record, $cm->id);
             $actionurl = null;
             $title = '';
             break;
 
         case 'page':
-            $record = $DB->get_record('page', ['id' => $cm->instance], 'id, intro, introformat, content, contentformat', MUST_EXIST);
-            $bodyhtml = !empty($record->content)
-                ? format_text($record->content, $record->contentformat, ['context' => $cm->context])
-                : format_text($record->intro, $record->introformat, ['context' => $cm->context]);
+            $record = $DB->get_record(
+                'page',
+                ['id' => $cm->instance],
+                'id, intro, introformat, content, contentformat, revision',
+                MUST_EXIST
+            );
+            if (!empty($record->content)) {
+                $content = file_rewrite_pluginfile_urls(
+                    $record->content,
+                    'pluginfile.php',
+                    $cm->context->id,
+                    'mod_page',
+                    'content',
+                    $record->revision
+                );
+                $bodyhtml = format_text($content, $record->contentformat, [
+                    'context' => $cm->context,
+                    'noclean' => true,
+                    'overflowdiv' => true,
+                ]);
+            } else {
+                $bodyhtml = format_module_intro('page', $record, $cm->id);
+            }
             break;
 
         case 'resource':
             $record = $DB->get_record('resource', ['id' => $cm->instance], 'id, intro, introformat', MUST_EXIST);
-            $bodyhtml = format_text($record->intro, $record->introformat, ['context' => $cm->context]);
+            $bodyhtml = format_module_intro('resource', $record, $cm->id);
             break;
 
         case 'url':
             $record = $DB->get_record('url', ['id' => $cm->instance], 'id, intro, introformat, externalurl', MUST_EXIST);
-            $bodyhtml = format_text($record->intro, $record->introformat, ['context' => $cm->context]);
+            $bodyhtml = format_module_intro('url', $record, $cm->id);
             $actionurl = $record->externalurl ?: $actionurl;
             break;
 
         case 'forum':
             $record = $DB->get_record('forum', ['id' => $cm->instance], 'id, intro, introformat', MUST_EXIST);
-            $bodyhtml = format_text($record->intro, $record->introformat, ['context' => $cm->context]);
+            $bodyhtml = format_module_intro('forum', $record, $cm->id);
             break;
 
         case 'book':
             $record = $DB->get_record('book', ['id' => $cm->instance], 'id, intro, introformat', MUST_EXIST);
-            $bodyhtml = format_text($record->intro, $record->introformat, ['context' => $cm->context]);
+            $bodyhtml = format_module_intro('book', $record, $cm->id);
             break;
 
         case 'lesson':
             $record = $DB->get_record('lesson', ['id' => $cm->instance], 'id, intro, introformat', MUST_EXIST);
-            $bodyhtml = format_text($record->intro, $record->introformat, ['context' => $cm->context]);
+            $bodyhtml = format_module_intro('lesson', $record, $cm->id);
             break;
     }
 

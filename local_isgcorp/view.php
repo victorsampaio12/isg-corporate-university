@@ -35,6 +35,10 @@ $PAGE->set_title(format_string($trilha->name));
 
 global $USER;
 
+if (!local_isgcorp_user_can_access_trilha((int) $trilha->id, (int) $USER->id)) {
+    throw new required_capability_exception($context, 'moodle/course:view', 'nopermissions', '');
+}
+
 $courses = array_values(local_isgcorp_get_trilha_courses($trilha->id));
 $levelstring = get_string('level' . $trilha->level, 'local_isgcorp');
 $trilhaprogress = local_isgcorp_get_trilha_progress((int) $trilha->id, (int) $USER->id);
@@ -77,9 +81,14 @@ foreach ($courses as $index => $course) {
     ];
 }
 
-$ctalabel = ($trilhaprogress !== null && $trilhaprogress > 0)
-    ? get_string('continuelearning', 'local_isgcorp')
-    : get_string('startlearning', 'local_isgcorp');
+$trailcompleted = $trilhaprogress !== null && $trilhaprogress >= 100;
+if ($trailcompleted) {
+    $ctalabel = get_string('trailcompletedcta', 'local_isgcorp');
+} else if ($trilhaprogress !== null && $trilhaprogress > 0) {
+    $ctalabel = get_string('continuelearning', 'local_isgcorp');
+} else {
+    $ctalabel = get_string('startlearning', 'local_isgcorp');
+}
 $heroactivitytext = $coursecount > 0
     ? get_string('trailcoursecompletion', 'local_isgcorp', (object) ['completed' => $completedcourses, 'total' => $coursecount])
     : get_string('trilhanocourses', 'local_isgcorp');
@@ -121,7 +130,8 @@ echo         '</div>';
 
 echo         '<div class="isg-trilha-hero-actions">';
 if ($firstcourseurl !== null) {
-    echo         '<a class="isg-trilha-cta" href="' . $firstcourseurl->out() . '">' . s($ctalabel) . ' &rarr;</a>';
+    $ctaicon = $trailcompleted ? ' &#10003;' : ' &rarr;';
+    echo         '<a class="isg-trilha-cta' . ($trailcompleted ? ' is-complete' : '') . '" href="' . $firstcourseurl->out() . '">' . s($ctalabel) . $ctaicon . '</a>';
 }
 echo         '</div>';
 

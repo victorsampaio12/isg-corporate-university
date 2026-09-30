@@ -47,7 +47,7 @@ $categorylabels = [
     'outros' => get_string('categoriaoutros', 'local_isgcorp'),
 ];
 
-$alltrilhas = local_isgcorp_get_trilhas(true);
+$alltrilhas = local_isgcorp_get_user_trilhas((int) $USER->id, true);
 
 // Categorias que realmente têm alguma trilha, na ordem fixa acima
 // (não a ordem que apareceram no banco, pra manter as abas estáveis).
