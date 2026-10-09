@@ -138,6 +138,67 @@ function local_isgcorp_get_trilha_progress(int $trilhaid, int $userid): ?int {
 }
 
 /**
+ * Soma a carga horaria cadastrada nos cursos de uma trilha.
+ *
+ * @param int $trilhaid
+ * @return float
+ */
+function local_isgcorp_get_trilha_course_hours(int $trilhaid): float {
+    global $DB;
+
+    $sql = "SELECT cd.value
+              FROM {local_isgcorp_trilha_course} tc
+              JOIN {customfield_field} f ON f.shortname = :shortname
+              JOIN {customfield_category} cat ON cat.id = f.categoryid
+                   AND cat.component = :component AND cat.area = :area
+         LEFT JOIN {customfield_data} cd ON cd.fieldid = f.id AND cd.instanceid = tc.courseid
+             WHERE tc.trilhaid = :trilhaid";
+    $values = $DB->get_fieldset_sql($sql, [
+        'shortname' => 'isg_cargahoraria',
+        'component' => 'core_course',
+        'area' => 'course',
+        'trilhaid' => $trilhaid,
+    ]);
+
+    return array_reduce($values, function(float $total, $value): float {
+        $normalised = str_replace(',', '.', trim((string) $value));
+        return $total + (is_numeric($normalised) ? (float) $normalised : 0);
+    }, 0.0);
+}
+
+/**
+ * Retorna a emissao existente ou cria uma para uma trilha concluida.
+ *
+ * @param int $trilhaid
+ * @param int $userid
+ * @return stdClass
+ */
+function local_isgcorp_get_or_create_certificate(int $trilhaid, int $userid): \stdClass {
+    global $DB;
+
+    if (local_isgcorp_get_trilha_progress($trilhaid, $userid) !== 100) {
+        throw new moodle_exception('certificateincomplete', 'local_isgcorp');
+    }
+
+    $conditions = ['userid' => $userid, 'trilhaid' => $trilhaid];
+    $issue = $DB->get_record('local_isgcorp_certificate', $conditions);
+    if ($issue) {
+        return $issue;
+    }
+
+    do {
+        $code = strtoupper(random_string(12));
+    } while ($DB->record_exists('local_isgcorp_certificate', ['code' => $code]));
+
+    $issue = (object) $conditions;
+    $issue->code = $code;
+    $issue->timecreated = time();
+    $issue->id = $DB->insert_record('local_isgcorp_certificate', $issue);
+
+    return $issue;
+}
+
+/**
  * Lista as trilhas que o usuario pode cursar.
  *
  * Gestores enxergam o catalogo completo. Para alunos, todos os cursos da
