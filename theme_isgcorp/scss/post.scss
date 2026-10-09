@@ -1936,6 +1936,12 @@ body.path-my.pagelayout-mydashboard #page.drawers .main-inner {
     justify-content: center;
     text-decoration: none;
 
+    .icon {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+    }
+
     &:hover {
         background: $isg-red-100;
         color: $isg-red-700;
