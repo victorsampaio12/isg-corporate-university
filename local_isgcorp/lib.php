@@ -21,6 +21,38 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/completionlib.php');
 
 /**
+ * Ensures the optional certificate display name exists in user profiles.
+ */
+function local_isgcorp_ensure_certificate_profile_field(): void {
+    global $DB;
+    if ($DB->record_exists('user_info_field', ['shortname' => 'isg_certificatename'])) { return; }
+    $category = $DB->get_record('user_info_category', ['name' => get_string('profilecategory', 'local_isgcorp')]);
+    if (!$category) {
+        $category = (object) ['name' => get_string('profilecategory', 'local_isgcorp'), 'sortorder' => (int)$DB->get_field_sql('SELECT COALESCE(MAX(sortorder), 0) + 1 FROM {user_info_category}')];
+        $category->id = $DB->insert_record('user_info_category', $category);
+    }
+    $DB->insert_record('user_info_field', (object) [
+        'shortname' => 'isg_certificatename', 'name' => get_string('certificatenamefield', 'local_isgcorp'), 'datatype' => 'text',
+        'description' => get_string('certificatenamefielddesc', 'local_isgcorp'), 'descriptionformat' => FORMAT_PLAIN,
+        'categoryid' => $category->id, 'sortorder' => 0, 'required' => 0, 'locked' => 0, 'visible' => 2,
+        'forceunique' => 0, 'signup' => 0, 'defaultdata' => '', 'defaultdataformat' => FORMAT_PLAIN,
+        'param1' => '50', 'param2' => '255', 'param3' => '0', 'param4' => '', 'param5' => '',
+    ]);
+}
+
+/**
+ * Returns the preferred certificate name, falling back to the Moodle full name.
+ */
+function local_isgcorp_get_certificate_name(int $userid): string {
+    global $DB;
+    $sql = "SELECT uid.data FROM {user_info_data} uid JOIN {user_info_field} uif ON uif.id = uid.fieldid WHERE uid.userid = :userid AND uif.shortname = :shortname";
+    $preferredname = trim((string)$DB->get_field_sql($sql, ['userid' => $userid, 'shortname' => 'isg_certificatename']));
+    if ($preferredname !== '') { return $preferredname; }
+    $user = $DB->get_record('user', ['id' => $userid], 'id,firstname,lastname,firstnamephonetic,lastnamephonetic,middlename,alternatename', MUST_EXIST);
+    return fullname($user);
+}
+
+/**
  * Verifica se a tabela de progresso manual por aula ja existe.
  *
  * Isso evita fatal caso o codigo seja carregado antes do upgrade do
@@ -167,20 +199,204 @@ function local_isgcorp_get_trilha_course_hours(int $trilhaid): float {
 }
 
 /**
- * Retorna a emissao existente ou cria uma para uma trilha concluida.
+ * Returns the workload configured for a course.
+ */
+function local_isgcorp_get_course_hours(int $courseid): float {
+    global $DB;
+
+    $sql = "SELECT cd.value
+              FROM {customfield_field} f
+              JOIN {customfield_category} cat ON cat.id = f.categoryid
+         LEFT JOIN {customfield_data} cd ON cd.fieldid = f.id AND cd.instanceid = :courseid
+             WHERE f.shortname = :shortname
+               AND cat.component = :component
+               AND cat.area = :area";
+    $value = $DB->get_field_sql($sql, [
+        'courseid' => $courseid,
+        'shortname' => 'isg_cargahoraria',
+        'component' => 'core_course',
+        'area' => 'course',
+    ]);
+    $normalised = str_replace(',', '.', trim((string)$value));
+
+    return is_numeric($normalised) ? (float)$normalised : 0.0;
+}
+
+/**
+ * Finds and normalises the first visible quiz used as the course assessment.
+ */
+function local_isgcorp_get_course_assessment(int $courseid): ?\stdClass {
+    global $DB;
+
+    $sql = "SELECT q.*, cm.id AS cmid
+              FROM {quiz} q
+              JOIN {modules} m ON m.name = 'quiz'
+              JOIN {course_modules} cm ON cm.module = m.id AND cm.instance = q.id
+             WHERE q.course = :courseid AND cm.deletioninprogress = 0
+          ORDER BY cm.id ASC";
+    $quiz = $DB->get_record_sql($sql, ['courseid' => $courseid], IGNORE_MULTIPLE);
+    if (!$quiz) {
+        return null;
+    }
+
+    $changed = false;
+    if ((int)$quiz->attempts !== 3) {
+        $quiz->attempts = 3;
+        $changed = true;
+    }
+    if ((int)$quiz->grademethod !== 1) {
+        // The best of the three attempts determines whether the student passed.
+        $quiz->grademethod = 1;
+        $changed = true;
+    }
+    if ($changed) {
+        $quiz->timemodified = time();
+        $DB->update_record('quiz', $quiz);
+        require_once(__DIR__ . '/../../mod/quiz/lib.php');
+        quiz_grade_item_update($quiz);
+    }
+
+    $gradeitem = $DB->get_record('grade_items', [
+        'courseid' => $courseid,
+        'itemmodule' => 'quiz',
+        'iteminstance' => $quiz->id,
+    ]);
+    $passinggrade = (float)$quiz->grade * 0.7;
+    if ($gradeitem && abs((float)$gradeitem->gradepass - $passinggrade) > 0.00001) {
+        $gradeitem->gradepass = $passinggrade;
+        $gradeitem->timemodified = time();
+        $DB->update_record('grade_items', $gradeitem);
+    }
+
+    return $quiz;
+}
+
+/**
+ * Returns assessment availability and result for a student.
+ */
+function local_isgcorp_get_course_assessment_state(\stdClass $course, int $userid): array {
+    global $DB;
+
+    $summary = local_isgcorp_get_manual_course_progress_summary($course, $userid);
+    $lessonscomplete = $summary !== null && $summary['total'] > 0 && $summary['completed'] === $summary['total'];
+    $quiz = local_isgcorp_get_course_assessment((int)$course->id);
+    if (!$quiz) {
+        return [
+            'quiz' => null,
+            'lessonscomplete' => $lessonscomplete,
+            'questioncount' => 0,
+            'configured' => false,
+            'attemptsused' => 0,
+            'attemptsremaining' => 3,
+            'grade' => null,
+            'percentage' => null,
+            'passed' => false,
+            'available' => false,
+        ];
+    }
+
+    $questioncount = $DB->count_records('quiz_slots', ['quizid' => $quiz->id]);
+    $attemptsused = $DB->count_records_select(
+        'quiz_attempts',
+        'quiz = :quizid AND userid = :userid AND preview = 0',
+        ['quizid' => $quiz->id, 'userid' => $userid]
+    );
+    $grade = $DB->get_field('quiz_grades', 'grade', ['quiz' => $quiz->id, 'userid' => $userid]);
+    $grade = $grade === false ? null : (float)$grade;
+    $configured = $questioncount > 0;
+    $percentage = $grade !== null && (float)$quiz->grade > 0
+        ? ($grade / (float)$quiz->grade) * 100
+        : null;
+    $passed = $percentage !== null && $percentage >= 70.0;
+
+    return [
+        'quiz' => $quiz,
+        'lessonscomplete' => $lessonscomplete,
+        'questioncount' => $questioncount,
+        'configured' => $configured,
+        'attemptsused' => $attemptsused,
+        'attemptsremaining' => max(0, 3 - $attemptsused),
+        'grade' => $grade,
+        'percentage' => $percentage,
+        'passed' => $passed,
+        'available' => $lessonscomplete && $configured && !$passed && $attemptsused < 3,
+    ];
+}
+
+/**
+ * Creates a final assessment with the ISG defaults and returns its course module.
+ */
+function local_isgcorp_create_course_assessment(int $courseid, string $name): \stdClass {
+    global $CFG, $DB;
+
+    $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+    if (local_isgcorp_get_course_assessment($courseid)) {
+        throw new moodle_exception('assessmentalreadyexists', 'local_isgcorp');
+    }
+
+    require_once($CFG->dirroot . '/course/lib.php');
+    require_once($CFG->dirroot . '/course/modlib.php');
+    require_once($CFG->dirroot . '/mod/quiz/lib.php');
+
+    $section = course_create_section($course);
+    course_update_section($course, $section, ['name' => get_string('courseassessment', 'local_isgcorp')]);
+    [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'quiz', (int)$section->section);
+
+    $moduleinfo->name = clean_param($name, PARAM_TEXT);
+    $moduleinfo->timeopen = 0;
+    $moduleinfo->timeclose = 0;
+    $moduleinfo->timelimit = 0;
+    $moduleinfo->overduehandling = 'autosubmit';
+    $moduleinfo->graceperiod = 0;
+    $moduleinfo->preferredbehaviour = 'deferredfeedback';
+    $moduleinfo->attempts = 3;
+    $moduleinfo->attemptonlast = 0;
+    $moduleinfo->grademethod = QUIZ_GRADEHIGHEST;
+    $moduleinfo->grade = 10;
+    $moduleinfo->sumgrades = 0;
+    $moduleinfo->decimalpoints = 1;
+    $moduleinfo->questiondecimalpoints = -1;
+    $moduleinfo->questionsperpage = 1;
+    $moduleinfo->navmethod = QUIZ_NAVMETHOD_FREE;
+    $moduleinfo->shuffleanswers = 1;
+    $moduleinfo->quizpassword = '';
+    $moduleinfo->subnet = '';
+    $moduleinfo->browsersecurity = '';
+    $moduleinfo->delay1 = 0;
+    $moduleinfo->delay2 = 0;
+    $moduleinfo->showuserpicture = 0;
+    $moduleinfo->showblocks = 0;
+
+    foreach (['during', 'immediately', 'open', 'closed'] as $period) {
+        foreach (['attempt', 'correctness', 'maxmarks', 'marks', 'specificfeedback', 'generalfeedback',
+                'rightanswer', 'overallfeedback'] as $reviewoption) {
+            $moduleinfo->{$reviewoption . $period} = $period === 'during' && $reviewoption === 'overallfeedback' ? 0 : 1;
+        }
+    }
+
+    $moduleinfo = add_moduleinfo($moduleinfo, $course);
+    local_isgcorp_get_course_assessment($courseid);
+
+    return get_coursemodule_from_id('quiz', (int)$moduleinfo->coursemodule, $courseid, false, MUST_EXIST);
+}
+
+/**
+ * Returns an existing issue or creates one for an approved course.
  *
- * @param int $trilhaid
+ * @param int $courseid
  * @param int $userid
  * @return stdClass
  */
-function local_isgcorp_get_or_create_certificate(int $trilhaid, int $userid): \stdClass {
+function local_isgcorp_get_or_create_certificate(int $courseid, int $userid): \stdClass {
     global $DB;
 
-    if (local_isgcorp_get_trilha_progress($trilhaid, $userid) !== 100) {
+    $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+    $state = local_isgcorp_get_course_assessment_state($course, $userid);
+    if (!$state['passed']) {
         throw new moodle_exception('certificateincomplete', 'local_isgcorp');
     }
 
-    $conditions = ['userid' => $userid, 'trilhaid' => $trilhaid];
+    $conditions = ['userid' => $userid, 'courseid' => $courseid];
     $issue = $DB->get_record('local_isgcorp_certificate', $conditions);
     if ($issue) {
         return $issue;
@@ -196,6 +412,22 @@ function local_isgcorp_get_or_create_certificate(int $trilhaid, int $userid): \s
     $issue->id = $DB->insert_record('local_isgcorp_certificate', $issue);
 
     return $issue;
+}
+
+/**
+ * Creates any certificates already earned by a user but not issued yet.
+ */
+function local_isgcorp_sync_user_certificates(int $userid): void {
+    global $DB;
+    $sql = "SELECT DISTINCT q.course FROM {quiz_grades} qg JOIN {quiz} q ON q.id = qg.quiz WHERE qg.userid = :userid AND q.grade > 0 AND (qg.grade / q.grade) >= :passpercentage";
+    $courseids = $DB->get_fieldset_sql($sql, ['userid' => $userid, 'passpercentage' => 0.7]);
+    foreach ($courseids as $courseid) {
+        $assessment = local_isgcorp_get_course_assessment((int)$courseid);
+        if (!$assessment) { continue; }
+        $usergrade = $DB->get_field('quiz_grades', 'grade', ['quiz' => $assessment->id, 'userid' => $userid]);
+        if ($usergrade === false || (float)$assessment->grade <= 0 || ((float)$usergrade / (float)$assessment->grade) < 0.7) { continue; }
+        local_isgcorp_get_or_create_certificate((int)$courseid, $userid);
+    }
 }
 
 /**
@@ -873,6 +1105,11 @@ function local_isgcorp_get_course_lessons(\stdClass $course, int $userid, ?int $
                 continue;
             }
 
+            // The final quiz is an assessment, not a lesson. Keeping it out avoids circular progress.
+            if ($candidatecm->modname === 'quiz') {
+                continue;
+            }
+
             $visiblecmids[] = $candidatecmid;
         }
 
@@ -952,6 +1189,14 @@ function local_isgcorp_get_course_progress_data(\stdClass $course, int $userid):
 
     if ($percent !== null) {
         $percent = (int) round($percent);
+    }
+
+    // Completing the lessons unlocks the assessment; only a passing grade completes the course.
+    if ($manualsummary !== null && $percent >= 100) {
+        $assessmentstate = local_isgcorp_get_course_assessment_state($course, $userid);
+        if ($assessmentstate['quiz'] && !$assessmentstate['passed']) {
+            $percent = 99;
+        }
     }
 
     if ($percent === null) {
@@ -1069,4 +1314,78 @@ function local_isgcorp_pluginfile($course, $cm, $context, $filearea, $args, $for
     }
 
     send_stored_file($file, null, 0, $forcedownload, $options);
+}
+
+/**
+ * Loads the shared confirmation modal used by destructive admin actions.
+ */
+function local_isgcorp_require_delete_confirmation(): void {
+    global $PAGE;
+
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $loaded = true;
+
+    $PAGE->requires->js_amd_inline(<<<'JS'
+require(['core/notification'], function(Notification) {
+    document.addEventListener('click', function(event) {
+        var trigger = event.target.closest('[data-isg-delete]');
+        if (!trigger) {
+            return;
+        }
+
+        event.preventDefault();
+        Notification.deleteCancel(
+            trigger.dataset.title,
+            trigger.dataset.message,
+            trigger.dataset.confirm,
+            function() {
+                var form = document.getElementById(trigger.dataset.formId);
+                if (form) {
+                    form.submit();
+                }
+            },
+            function() {},
+            {triggerElement: trigger}
+        );
+    });
+});
+JS
+    );
+}
+
+/**
+ * Renders a delete button and its protected POST form.
+ */
+function local_isgcorp_delete_action(string $action, array $params, string $message, string $formid): string {
+    local_isgcorp_require_delete_confirmation();
+
+    $form = html_writer::start_tag('form', [
+        'id' => $formid,
+        'method' => 'post',
+        'action' => (new moodle_url($action))->out(false),
+        'class' => 'd-none',
+    ]);
+    foreach (['sesskey' => sesskey()] + $params as $name => $value) {
+        $form .= html_writer::empty_tag('input', [
+            'type' => 'hidden',
+            'name' => $name,
+            'value' => $value,
+        ]);
+    }
+    $form .= html_writer::end_tag('form');
+
+    $button = html_writer::tag('button', get_string('delete'), [
+        'type' => 'button',
+        'class' => 'btn btn-link text-danger p-0',
+        'data-isg-delete' => '1',
+        'data-form-id' => $formid,
+        'data-title' => get_string('confirmdeleteheading', 'local_isgcorp'),
+        'data-message' => $message,
+        'data-confirm' => get_string('delete'),
+    ]);
+
+    return $button . $form;
 }

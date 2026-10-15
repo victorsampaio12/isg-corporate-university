@@ -17,7 +17,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 function xmldb_local_isgcorp_upgrade($oldversion) {
-    global $DB;
+    global $CFG, $DB;
 
     $dbman = $DB->get_manager();
 
@@ -156,6 +156,81 @@ function xmldb_local_isgcorp_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2026100201, 'local', 'isgcorp');
+    }
+
+    if ($oldversion < 2026100901) {
+        // Trail certificates used a different completion rule and cannot be carried over safely.
+        $table = new xmldb_table('local_isgcorp_certificate');
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('code', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_key('courseid', XMLDB_KEY_FOREIGN, ['courseid'], 'course', ['id']);
+        $table->add_key('user_course', XMLDB_KEY_UNIQUE, ['userid', 'courseid']);
+        $table->add_index('code', XMLDB_INDEX_UNIQUE, ['code']);
+        $dbman->create_table($table);
+
+        upgrade_plugin_savepoint(true, 2026100901, 'local', 'isgcorp');
+    }
+
+    if ($oldversion < 2026100902) {
+        require_once($CFG->dirroot . '/local/isgcorp/lib.php');
+        local_isgcorp_ensure_certificate_profile_field();
+
+        upgrade_plugin_savepoint(true, 2026100902, 'local', 'isgcorp');
+    }
+
+    if ($oldversion < 2026101502) {
+        $table = new xmldb_table('local_isgcorp_certname_log');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('changedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('oldvalue', XMLDB_TYPE_TEXT, null, null, null);
+            $table->add_field('newvalue', XMLDB_TYPE_TEXT, null, null, null);
+            $table->add_field('isinitial', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+            $table->add_key('changedby', XMLDB_KEY_FOREIGN, ['changedby'], 'user', ['id']);
+            $table->add_index('userid_timecreated', XMLDB_INDEX_NOTUNIQUE, ['userid', 'timecreated']);
+            $dbman->create_table($table);
+        }
+
+        $sql = "SELECT uid.userid, uid.data
+                  FROM {user_info_data} uid
+                  JOIN {user_info_field} uif ON uif.id = uid.fieldid
+                 WHERE uif.shortname = :shortname AND uid.data <> ''";
+        foreach ($DB->get_records_sql($sql, ['shortname' => 'isg_certificatename']) as $profiledata) {
+            $DB->insert_record('local_isgcorp_certname_log', (object) [
+                'userid' => (int) $profiledata->userid,
+                'changedby' => (int) $profiledata->userid,
+                'oldvalue' => '',
+                'newvalue' => trim((string) $profiledata->data),
+                'isinitial' => 1,
+                'timecreated' => time(),
+            ]);
+        }
+
+        upgrade_plugin_savepoint(true, 2026101502, 'local', 'isgcorp');
+    }
+
+    if ($oldversion < 2026101503) {
+        $table = new xmldb_table('local_isgcorp_certname_log');
+        $field = new xmldb_field('isinitial', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'newvalue');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+            $DB->set_field('local_isgcorp_certname_log', 'isinitial', 1);
+        }
+
+        upgrade_plugin_savepoint(true, 2026101503, 'local', 'isgcorp');
     }
 
     return true;

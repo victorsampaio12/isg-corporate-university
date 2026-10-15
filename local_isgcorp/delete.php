@@ -20,8 +20,14 @@ require_login();
 $context = context_system::instance();
 require_capability('local/isgcorp:manage', $context);
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    throw new moodle_exception('invalidrequest');
+}
+
 $id = required_param('id', PARAM_INT);
 require_sesskey();
+
+$DB->get_record('local_isgcorp_trilha', ['id' => $id], '*', MUST_EXIST);
 
 $DB->delete_records('local_isgcorp_trilha_course', ['trilhaid' => $id]);
 $DB->delete_records('local_isgcorp_trilha', ['id' => $id]);

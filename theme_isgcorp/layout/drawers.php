@@ -46,6 +46,9 @@ if (defined('BEHAT_SITE_RUNNING') && get_user_preferences('behat_keep_drawer_clo
 }
 
 $extraclasses = ['uses-drawers'];
+if (!theme_isgcorp_is_privileged_user()) {
+    $extraclasses[] = 'isg-learner';
+}
 if ($courseindexopen) {
     $extraclasses[] = 'drawer-open-index';
 }
@@ -79,6 +82,36 @@ $hidefullheader = function_exists('theme_isgcorp_should_hide_full_header')
 $hidesecondarynavigation = function_exists('theme_isgcorp_should_hide_secondary_navigation')
     && theme_isgcorp_should_hide_secondary_navigation($PAGE);
 if (!$hidesecondarynavigation && $PAGE->has_secondary_navigation()) {
+    if ($PAGE->context->contextlevel === CONTEXT_SYSTEM && function_exists('theme_isgcorp_is_privileged_user')
+            && theme_isgcorp_is_privileged_user() && !$PAGE->secondarynav->get('isgadmindashboard')) {
+        $dashboardnode = navigation_node::create(
+            get_string('admindashboard', 'local_isgcorp'),
+            new moodle_url('/local/isgcorp/dashboard.php'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'isgadmindashboard'
+        );
+        if ($PAGE->url->compare(new moodle_url('/local/isgcorp/dashboard.php'), URL_MATCH_BASE)) {
+            $trainingnode = $PAGE->secondarynav->get('local_isgcorp_training_category');
+            if ($trainingnode) {
+                $trainingnode->make_inactive();
+            }
+            $dashboardnode->make_active();
+        }
+        $PAGE->secondarynav->add_node($dashboardnode, 'users');
+        $dashboardurl = (new moodle_url('/local/isgcorp/dashboard.php'))->out(false);
+        $PAGE->requires->js_amd_inline("require([], function() {
+            document.addEventListener('click', function(event) {
+                var link = event.target.closest('li[data-key=\"isgadmindashboard\"] a');
+                if (!link) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                window.location.href = " . json_encode($dashboardurl) . ";
+            }, true);
+        });");
+    }
     $tablistnav = $PAGE->has_tablist_secondary_navigation();
     $moremenu = new \core\navigation\output\more_menu($PAGE->secondarynav, 'nav-tabs', true, $tablistnav);
     $secondarynavigation = $moremenu->export_for_template($OUTPUT);
@@ -118,7 +151,7 @@ if ($hidefullheader) {
 
 $templatecontext = [
     'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), 'escape' => false]),
-    'logourl' => $OUTPUT->image_url('brand-mark', 'theme_isgcorp')->out(false),
+    'logourl' => theme_isgcorp_get_brand_asset_url('logo', 'brand-mark')->out(false),
     'showfullheader' => !$hidefullheader,
     'output' => $OUTPUT,
     'sidepreblocks' => $blockshtml,

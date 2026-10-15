@@ -10,8 +10,11 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 require_login();
+
+local_isgcorp_sync_user_certificates((int)$USER->id);
 
 $page = optional_param('page', 0, PARAM_INT);
 $perpage = 8;
@@ -22,22 +25,19 @@ $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('mycertificates', 'local_isgcorp'));
 
-$sql = "SELECT ci.id, ci.timecreated, ci.code, t.id AS trilhaid, t.name AS certname, t.level
+$sql = "SELECT ci.id, ci.timecreated, ci.code, c.id AS courseid, c.fullname AS certname
           FROM {local_isgcorp_certificate} ci
-          JOIN {local_isgcorp_trilha} t ON t.id = ci.trilhaid
+          JOIN {course} c ON c.id = ci.courseid
          WHERE ci.userid = :userid
       ORDER BY ci.timecreated DESC";
 $allcerts = $DB->get_records_sql($sql, ['userid' => $USER->id]);
 $totalcount = count($allcerts);
-$advancedcount = 0;
+$advancedcount = $totalcount;
 $lastyear = null;
 
 foreach ($allcerts as $certificate) {
     if ($lastyear === null) {
         $lastyear = userdate($certificate->timecreated, '%Y');
-    }
-    if ($certificate->level === 'avancado') {
-        $advancedcount++;
     }
 }
 
@@ -69,7 +69,7 @@ if (!$allcerts) {
     $pagedcerts = array_slice(array_values($allcerts), $page * $perpage, $perpage);
     echo '<div class="isg-cert-grid">';
     foreach ($pagedcerts as $certificate) {
-        $downloadurl = new moodle_url('/local/isgcorp/certificate.php', ['trilhaid' => $certificate->trilhaid]);
+        $downloadurl = new moodle_url('/local/isgcorp/certificate.php', ['courseid' => $certificate->courseid]);
         $date = userdate($certificate->timecreated, get_string('certdateformat', 'local_isgcorp'));
 
         echo '<div class="isg-cert-card">';

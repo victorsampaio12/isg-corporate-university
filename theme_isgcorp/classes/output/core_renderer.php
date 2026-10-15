@@ -147,7 +147,7 @@ class core_renderer extends \theme_boost\output\core_renderer {
         $context = $form->export_for_template($this);
         $context->errorformatted = $this->error_text($context->error);
 
-        $context->logourl = $this->image_url('brand-mark', 'theme_isgcorp')->out(false);
+        $context->logourl = theme_isgcorp_get_brand_asset_url('logo', 'brand-mark')->out(false);
         $context->canloginasguest = false;
         $context->smallscreensonly = false;
         $context->sitename = format_string(
@@ -171,7 +171,7 @@ class core_renderer extends \theme_boost\output\core_renderer {
 
         $context = [
             'wwwroot' => $CFG->wwwroot,
-            'logourl' => $this->image_url('brand-mark', 'theme_isgcorp')->out(),
+            'logourl' => theme_isgcorp_get_brand_asset_url('logo', 'brand-mark')->out(),
             'sitename' => format_string($PAGE->course->fullname ?? get_string('pluginname', 'theme_isgcorp')),
             'items' => theme_isgcorp_get_navigation_items($currenturl),
         ];
