@@ -15,6 +15,7 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/lib.php');
 require_once($CFG->libdir . '/adminlib.php');
 
 require_login();
@@ -24,15 +25,22 @@ require_capability('local/isgcorp:manage', $context);
 $PAGE->set_url(new moodle_url('/local/isgcorp/manage.php'));
 $PAGE->set_context($context);
 admin_externalpage_setup('local_isgcorp_manage');
+$PAGE->navbar->ignore_active();
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('managetrilhas', 'local_isgcorp'));
-
+echo html_writer::link(
+    new moodle_url('/local/isgcorp/training.php'),
+    '&larr; ' . get_string('backtotrainingdashboard', 'local_isgcorp'),
+    ['class' => 'btn btn-outline-secondary mb-3']
+);
+echo '<div class="isg-admin-page-head"><div><h2>' . get_string('managetrilhas', 'local_isgcorp') . '</h2>';
+echo '<p>' . get_string('trainingtrailsdesc', 'local_isgcorp') . '</p></div>';
 echo html_writer::link(
     new moodle_url('/local/isgcorp/edit.php'),
     get_string('addtrilha', 'local_isgcorp'),
-    ['class' => 'btn btn-primary mb-3']
+    ['class' => 'btn btn-primary']
 );
+echo '</div>';
 
 $trilhas = $DB->get_records('local_isgcorp_trilha', null, 'sortorder ASC, id ASC');
 
@@ -40,12 +48,13 @@ if (empty($trilhas)) {
     echo html_writer::div(get_string('notrilhas', 'local_isgcorp'), 'alert alert-info');
 } else {
     $table = new html_table();
+    $table->attributes['class'] = 'generaltable isg-assessment-admin-table';
     $table->head = [
         get_string('trilhaname', 'local_isgcorp'),
         get_string('trilhalevel', 'local_isgcorp'),
         get_string('trilhahours', 'local_isgcorp'),
         get_string('trilhacourses', 'local_isgcorp'),
-        get_string('trilhavisible', 'local_isgcorp'),
+        get_string('status'),
         get_string('actionscolumn', 'local_isgcorp'),
     ];
 
@@ -53,16 +62,21 @@ if (empty($trilhas)) {
         $coursecount = $DB->count_records('local_isgcorp_trilha_course', ['trilhaid' => $trilha->id]);
 
         $editurl = new moodle_url('/local/isgcorp/edit.php', ['id' => $trilha->id]);
-        $deleteurl = new moodle_url('/local/isgcorp/delete.php', ['id' => $trilha->id, 'sesskey' => sesskey()]);
-
-        $confirmmsg = get_string('confirmdelete', 'local_isgcorp', format_string($trilha->name));
-        $deletelink = html_writer::link(
-            $deleteurl,
-            get_string('delete'),
-            ['onclick' => "return confirm(" . json_encode($confirmmsg) . ");"]
+        $deletelink = local_isgcorp_delete_action(
+            '/local/isgcorp/delete.php',
+            ['id' => $trilha->id],
+            get_string('confirmdelete', 'local_isgcorp', format_string($trilha->name)),
+            'delete-trail-' . $trilha->id
         );
 
-        $actions = html_writer::link($editurl, get_string('edit')) . ' | ' . $deletelink;
+        $viewurl = new moodle_url('/local/isgcorp/view.php', ['id' => $trilha->id]);
+        $actions = html_writer::div(
+            html_writer::link($editurl, get_string('edit')) .
+            ' <span aria-hidden="true">|</span> ' .
+            html_writer::link($viewurl, get_string('view')) .
+            ' <span aria-hidden="true">|</span> ' . $deletelink,
+            'isg-admin-row-actions'
+        );
 
         $levelstring = get_string('level' . $trilha->level, 'local_isgcorp');
 
@@ -71,7 +85,9 @@ if (empty($trilhas)) {
             $levelstring,
             $trilha->estimatedhours . 'h',
             $coursecount,
-            $trilha->visible ? get_string('yes') : get_string('no'),
+            $trilha->visible
+                ? html_writer::span(get_string('statusactive', 'local_isgcorp'), 'badge badge-success')
+                : html_writer::span(get_string('statusdraft', 'local_isgcorp'), 'badge badge-secondary'),
             $actions,
         ];
     }

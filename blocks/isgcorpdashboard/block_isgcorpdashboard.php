@@ -108,7 +108,8 @@ class block_isgcorpdashboard extends block_base {
             ? new moodle_url('/local/isgcorp/index.php')
             : new moodle_url('/course/index.php');
 
-        $html = '<div class="isg-hero">';
+        $bannerurl = theme_isgcorp_get_brand_asset_url('homebanner', 'hero-bg');
+        $html = '<div class="isg-hero" style="background-image:linear-gradient(90deg, rgba(88,0,3,.98) 0%, rgba(119,1,4,.88) 46%, rgba(119,1,4,.08) 100%),url(' . s($bannerurl->out(false)) . ')">';
         $html .=     '<h1>' . get_string('welcometitle', 'block_isgcorpdashboard') . '</h1>';
         $html .=     '<p>' . get_string('welcomesubtitle', 'block_isgcorpdashboard') . '</p>';
         $html .=     '<a class="isg-hero-cta" href="' . $destinationurl->out() . '">';
@@ -341,13 +342,13 @@ class block_isgcorpdashboard extends block_base {
         global $DB;
 
         $dbman = $DB->get_manager();
-        $table = new \xmldb_table('customcert_issues');
+        $table = new \xmldb_table('local_isgcorp_certificate');
 
         if (!$dbman->table_exists($table)) {
             return null;
         }
 
-        return $DB->count_records('customcert_issues', ['userid' => $userid]);
+        return $DB->count_records('local_isgcorp_certificate', ['userid' => $userid]);
     }
 
     /**

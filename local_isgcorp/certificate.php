@@ -7,20 +7,35 @@ require_once($CFG->libdir . '/pdflib.php');
 
 require_login();
 
-$trilhaid = required_param('trilhaid', PARAM_INT);
-$trilha = $DB->get_record('local_isgcorp_trilha', ['id' => $trilhaid, 'visible' => 1], '*', MUST_EXIST);
+$courseid = required_param('courseid', PARAM_INT);
+$course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+require_login($course);
 
-if (!local_isgcorp_user_can_access_trilha($trilhaid, (int) $USER->id)) {
-    throw new required_capability_exception(context_system::instance(), 'moodle/course:view', 'nopermissions', '');
-}
-
-$issue = local_isgcorp_get_or_create_certificate($trilhaid, (int) $USER->id);
-$hours = local_isgcorp_get_trilha_course_hours($trilhaid);
+$issue = local_isgcorp_get_or_create_certificate($courseid, (int)$USER->id);
+$hours = local_isgcorp_get_course_hours($courseid);
 $hourslabel = rtrim(rtrim(number_format($hours, 1, ',', ''), '0'), ',') . 'h';
 $date = userdate($issue->timecreated, '%d de %B de %Y');
+$certificatename = local_isgcorp_get_certificate_name((int)$USER->id);
 $background = __DIR__ . '/pix/certificate-background.png';
+$backgroundcontent = null;
+$theme = theme_config::load('isgcorp');
+$configuredbackground = $theme->setting_file_url('certificatebackground', 'certificatebackground');
+if ($configuredbackground) {
+    $fs = get_file_storage();
+    $files = $fs->get_area_files(
+        context_system::instance()->id,
+        'theme_isgcorp',
+        'certificatebackground',
+        0,
+        'id DESC',
+        false
+    );
+    if ($file = reset($files)) {
+        $backgroundcontent = $file->get_content();
+    }
+}
 
-if (!is_readable($background)) {
+if ($backgroundcontent === null && !is_readable($background)) {
     throw new moodle_exception('filenotfound', 'error');
 }
 
@@ -30,19 +45,23 @@ $pdf->setPrintFooter(false);
 $pdf->SetMargins(0, 0, 0);
 $pdf->SetAutoPageBreak(false, 0);
 $pdf->AddPage('L', [270, 180]);
-$pdf->Image($background, 0, 0, 270, 180, 'PNG');
+$pdf->Image($backgroundcontent !== null ? '@' . $backgroundcontent : $background, 0, 0, 270, 180);
 
 $pdf->SetTextColor(47, 42, 42);
-$pdf->SetFont('helvetica', 'B', 34);
-$pdf->SetXY(45, 69);
-$pdf->MultiCell(142, 18, format_string($trilha->name), 0, 'L', false, 1);
+$pdf->SetFont('helvetica', '', 11.5);
+$pdf->SetXY(45, 64);
+$statement = get_string('certificateintro', 'local_isgcorp') . ' <strong>' . s($certificatename) . '</strong> ' . get_string('certificatecompletiontext', 'local_isgcorp');
+$pdf->writeHTMLCell(142, 12, '', '', $statement, 0, 1, false, true, 'L', true);
+$pdf->SetFont('helvetica', 'B', 27);
+$pdf->SetXY(45, 80);
+$pdf->MultiCell(142, 14, format_string($course->fullname), 0, 'L', false, 1);
 
 $pdf->SetFont('helvetica', '', 19);
-$pdf->SetXY(45, 95);
+$pdf->SetXY(45, 103);
 $pdf->Cell(48, 10, 'Concluido em', 0, 0, 'L');
 $pdf->SetTextColor(170, 0, 0);
 $pdf->SetFont('helvetica', 'B', 19);
-$pdf->SetXY(93, 95);
+$pdf->SetXY(93, 103);
 $pdf->Cell(94, 10, $date, 0, 0, 'L');
 
 $pdf->SetTextColor(20, 20, 20);
@@ -55,6 +74,6 @@ $pdf->SetFont('helvetica', '', 7);
 $pdf->SetXY(185, 166);
 $pdf->Cell(48, 5, 'Codigo: ' . $issue->code, 0, 0, 'R');
 
-$filename = clean_filename('Certificado - ' . format_string($trilha->name) . '.pdf');
+$filename = clean_filename('Certificado - ' . format_string($course->fullname) . '.pdf');
 $pdf->Output($filename, 'D');
 exit;

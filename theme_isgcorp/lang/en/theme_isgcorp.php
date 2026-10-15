@@ -17,6 +17,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'ISG Corporate University';
+$string['quizbuildertiptitle'] = 'Build the assessment in a few steps';
+$string['quizbuildertiptext'] = 'Add questions, define the correct answer, and review scoring. For objective assessments, we recommend Multiple choice or True/False.';
 $string['configtitle'] = 'ISG Corp';
 $string['choosereadme'] = 'Boost child theme built for ISG\'s Corporate University e-learning platform.';
 $string['generalsettings'] = 'General settings';
@@ -29,3 +31,4 @@ $string['navinicio'] = 'Home';
 $string['navtrilhas'] = 'Learning paths';
 $string['navcertificados'] = 'Certificates';
 $string['navadmin'] = 'Site administration';
+$string['quizpassingpercentage'] = 'Passing percentage: {$a}%';

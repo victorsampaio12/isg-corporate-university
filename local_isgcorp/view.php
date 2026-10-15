@@ -130,8 +130,7 @@ echo         '</div>';
 
 echo         '<div class="isg-trilha-hero-actions">';
 if ($trailcompleted) {
-    $certificateurl = new moodle_url('/local/isgcorp/certificate.php', ['trilhaid' => $trilha->id]);
-    echo         '<a class="isg-trilha-cta is-complete" href="' . $certificateurl->out() . '">' . get_string('downloadtrailcertificate', 'local_isgcorp') . ' &#8595;</a>';
+    echo         '<span class="isg-trilha-cta is-complete">' . get_string('trailcompletedcta', 'local_isgcorp') . ' &#10003;</span>';
 } else if ($firstcourseurl !== null) {
     $ctaicon = $trailcompleted ? ' &#10003;' : ' &rarr;';
     echo         '<a class="isg-trilha-cta' . ($trailcompleted ? ' is-complete' : '') . '" href="' . $firstcourseurl->out() . '">' . s($ctalabel) . $ctaicon . '</a>';

@@ -27,6 +27,18 @@ function theme_isgcorp_is_privileged_user(): bool {
 }
 
 /**
+ * Returns an uploaded branding asset or the bundled theme image fallback.
+ */
+function theme_isgcorp_get_brand_asset_url(string $filearea, string $fallbackpix): moodle_url {
+    global $OUTPUT;
+
+    $theme = theme_config::load('isgcorp');
+    $url = $theme->setting_file_url($filearea, $filearea);
+
+    return $url ? new moodle_url($url) : $OUTPUT->image_url($fallbackpix, 'theme_isgcorp');
+}
+
+/**
  * Monta o SCSS completo do tema.
  *
  * @param theme_config $theme
@@ -239,9 +251,9 @@ function theme_isgcorp_should_hide_secondary_navigation(\moodle_page $page): boo
  * Serve arquivos da area de configuracoes do tema.
  */
 function theme_isgcorp_pluginfile($course, $birecordorcm, $context, $filearea, $args, $forcedownload, array $options = []) {
-    if ($context->contextlevel == CONTEXT_SYSTEM && $filearea === 'logo') {
+    if ($context->contextlevel == CONTEXT_SYSTEM && in_array($filearea, ['logo', 'certificatebackground', 'homebanner'], true)) {
         $theme = theme_config::load('isgcorp');
-        return $theme->setting_file_serve('logo', $args, $forcedownload, $options);
+        return $theme->setting_file_serve($filearea, $args, $forcedownload, $options);
     } else {
         send_file_not_found();
     }

@@ -69,7 +69,21 @@ if ($currentlesson === null) {
 }
 
 if ($action === 'togglecomplete' && confirm_sesskey()) {
+    $wascompleted = !empty($currentlesson['completed']);
     local_isgcorp_toggle_lesson_completion($course, $cmid, (int) $USER->id);
+    if (!$wascompleted) {
+        $updatedlessons = array_values(local_isgcorp_get_course_lessons($course, (int)$USER->id, $trilhaid ?: null));
+        foreach ($updatedlessons as $index => $lesson) {
+            if ((int)$lesson['cmid'] !== $cmid) { continue; }
+            if (isset($updatedlessons[$index + 1])) { redirect($updatedlessons[$index + 1]['url']); }
+            break;
+        }
+        $assessmentstate = local_isgcorp_get_course_assessment_state($course, (int)$USER->id);
+        if ($assessmentstate['quiz'] && $assessmentstate['configured'] && $assessmentstate['lessonscomplete']) {
+            redirect(new moodle_url('/local/isgcorp/assessment.php', ['courseid' => $courseid, 'trilhaid' => $trilhaid]));
+        }
+        redirect(local_isgcorp_get_course_page_url((int)$course->id, $trilhaid ?: null));
+    }
     redirect($pageurl);
 }
 
@@ -107,6 +121,7 @@ $backurl = local_isgcorp_get_course_page_url((int) $course->id, $trilhaid ?: nul
 $completed = !empty($currentlesson['completed']);
 $showtoggle = !empty($currentlesson['cancomplete']);
 $togglelabel = $completed ? get_string('marklessonincomplete', 'local_isgcorp') : get_string('marklessoncomplete', 'local_isgcorp');
+$assessmentstate = local_isgcorp_get_course_assessment_state($course, (int)$USER->id);
 
 if ($completed) {
     $statuslabel = get_string('lessoncomplete', 'local_isgcorp');
@@ -231,6 +246,42 @@ foreach ($lessons as $lesson) {
     echo             '</span>';
     echo             '<span class="isg-status-pill ' . $itemstatusclass . '">' . s($itemstatuslabel) . '</span>';
     echo         '</a>';
+}
+
+if ($assessmentstate['quiz']) {
+    $assessmenturl = null;
+    $assessmentitemclass = 'is-assessment';
+    if (!$assessmentstate['configured']) {
+        $assessmentstatusclass = 'is-neutral';
+        $assessmentstatuslabel = get_string('assessmentnavunavailable', 'local_isgcorp');
+    } else if ($assessmentstate['passed']) {
+        $assessmentstatusclass = 'is-complete';
+        $assessmentstatuslabel = get_string('assessmentnavpassed', 'local_isgcorp');
+        $assessmenturl = new moodle_url('/mod/quiz/view.php', ['id' => $assessmentstate['quiz']->cmid]);
+    } else if (!$assessmentstate['lessonscomplete']) {
+        $assessmentstatusclass = 'is-neutral';
+        $assessmentstatuslabel = get_string('assessmentnavlocked', 'local_isgcorp');
+        $assessmentitemclass .= ' is-disabled';
+    } else if ($assessmentstate['attemptsremaining'] <= 0) {
+        $assessmentstatusclass = 'is-neutral';
+        $assessmentstatuslabel = get_string('assessmentattemptsexhaustedshort', 'local_isgcorp');
+        $assessmenturl = new moodle_url('/mod/quiz/view.php', ['id' => $assessmentstate['quiz']->cmid]);
+    } else {
+        $assessmentstatusclass = 'is-progress';
+        $assessmentstatuslabel = get_string('assessmentnavavailable', 'local_isgcorp');
+        $assessmenturl = new moodle_url('/local/isgcorp/assessment.php', ['courseid' => $courseid, 'trilhaid' => $trilhaid]);
+    }
+    $assessmenttag = $assessmenturl ? 'a' : 'div';
+    $assessmentattributes = ['class' => 'isg-lesson-sidebar-item ' . $assessmentitemclass];
+    if ($assessmenturl) { $assessmentattributes['href'] = $assessmenturl->out(false); } else { $assessmentattributes['aria-disabled'] = 'true'; }
+    echo html_writer::start_tag($assessmenttag, $assessmentattributes);
+    echo html_writer::span((string)(count($lessons) + 1), 'isg-lesson-sidebar-step');
+    echo html_writer::start_span('isg-lesson-sidebar-copy');
+    echo html_writer::tag('strong', get_string('courseassessment', 'local_isgcorp'));
+    echo html_writer::tag('small', get_string('assessmentnavtype', 'local_isgcorp'));
+    echo html_writer::end_span();
+    echo html_writer::span($assessmentstatuslabel, 'isg-status-pill ' . $assessmentstatusclass);
+    echo html_writer::end_tag($assessmenttag);
 }
 echo                 '</div>';
 echo             '</section>';

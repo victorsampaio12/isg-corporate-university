@@ -58,8 +58,11 @@ $backurl = $trilha
 $progresspercent = $progress['percent'] ?? ($courseprogress['percent'] ?? 0);
 $completedlessons = $progress['completed'] ?? 0;
 $totallessons = $progress['total'] ?? count($lessons);
-$coursecompleted = $progresspercent >= 100;
+$assessmentstate = local_isgcorp_get_course_assessment_state($course, (int)$USER->id);
+$lessonscomplete = $assessmentstate['lessonscomplete'];
+$coursecompleted = $assessmentstate['passed'];
 $primaryurl = !empty($lessons) ? $lessons[0]['url'] : new moodle_url('/course/view.php', ['id' => $course->id]);
+$primarydisabled = false;
 
 if (!$coursecompleted) {
     foreach ($lessons as $lesson) {
@@ -71,7 +74,17 @@ if (!$coursecompleted) {
 }
 
 if ($coursecompleted) {
-    $primarylabel = get_string('coursecompletedcta', 'local_isgcorp');
+    $primaryurl = new moodle_url('/local/isgcorp/certificate.php', ['courseid' => $course->id]);
+    $primarylabel = get_string('downloadcoursecertificate', 'local_isgcorp');
+} else if ($lessonscomplete && $assessmentstate['attemptsremaining'] <= 0) {
+    $primarylabel = get_string('assessmentattemptsexhaustedshort', 'local_isgcorp');
+    $primarydisabled = true;
+} else if ($lessonscomplete) {
+    $primaryurl = new moodle_url('/local/isgcorp/assessment.php', [
+        'courseid' => $course->id,
+        'trilhaid' => $trilhaid,
+    ]);
+    $primarylabel = get_string('startassessment', 'local_isgcorp');
 } else if ($progresspercent > 0) {
     $primarylabel = get_string('continuecourse', 'local_isgcorp');
 } else {
@@ -94,8 +107,12 @@ echo                     '<span class="isg-module-pill">&#128196; ' . ($totalles
 echo                     '<span class="isg-module-pill">&#128202; ' . ($progresspercent ?: 0) . '%</span>';
 echo                 '</div>';
 echo                 '<div class="isg-module-actions">';
-$primaryicon = $coursecompleted ? ' &#10003;' : ' &rarr;';
-echo                     '<a class="isg-module-primary-btn' . ($coursecompleted ? ' is-complete' : '') . '" href="' . $primaryurl->out() . '">' . s($primarylabel) . $primaryicon . '</a>';
+$primaryicon = $coursecompleted ? ' &#8595;' : ' &rarr;';
+if ($primarydisabled) {
+    echo                 '<span class="isg-module-primary-btn is-disabled" aria-disabled="true">' . s($primarylabel) . '</span>';
+} else {
+    echo                 '<a class="isg-module-primary-btn' . ($coursecompleted ? ' is-complete' : '') . '" href="' . $primaryurl->out() . '">' . s($primarylabel) . $primaryicon . '</a>';
+}
 echo                     '<a class="isg-module-secondary-btn" href="' . $backurl->out() . '">' . s(get_string('backtotrail', 'local_isgcorp')) . '</a>';
 echo                 '</div>';
 echo             '</div>';
@@ -165,6 +182,25 @@ if (empty($lessons)) {
 
     echo     '</div>';
 }
+
+$assessmentclass = !$lessonscomplete ? 'is-locked' : ($coursecompleted ? 'is-complete' : 'is-progress');
+if (!$assessmentstate['quiz']) {
+    $assessmentstatus = get_string('assessmentmissing', 'local_isgcorp');
+} else if (!$assessmentstate['configured']) {
+    $assessmentstatus = get_string('assessmentquestioncount', 'local_isgcorp', $assessmentstate['questioncount']);
+} else if (!$lessonscomplete) {
+    $assessmentstatus = get_string('assessmentlocked', 'local_isgcorp');
+} else if ($coursecompleted) {
+    $assessmentstatus = get_string('assessmentpassed', 'local_isgcorp', format_float($assessmentstate['percentage'], 1));
+} else if ($assessmentstate['attemptsremaining'] <= 0) {
+    $assessmentstatus = get_string('assessmentattemptsexhausted', 'local_isgcorp');
+} else {
+    $assessmentstatus = get_string('assessmentavailable', 'local_isgcorp', $assessmentstate['attemptsremaining']);
+}
+echo '<div class="isg-module-info-box ' . $assessmentclass . '">';
+echo '<strong>' . get_string('courseassessment', 'local_isgcorp') . '</strong>';
+echo '<p>' . s($assessmentstatus) . '</p>';
+echo '</div>';
 
 echo         '<div class="isg-module-info-box">';
 echo             '<strong>' . get_string('modulehelpheading', 'local_isgcorp') . '</strong>';

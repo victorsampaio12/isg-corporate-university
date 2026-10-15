@@ -24,14 +24,6 @@ if ($ADMIN->fulltree) {
     // ---- Aba: Geral ----
     $page = new admin_settingpage('theme_isgcorp_general', get_string('generalsettings', 'theme_isgcorp'));
 
-    // Logo da Universidade Corporativa ISG.
-    $name = 'theme_isgcorp/logo';
-    $title = get_string('logo', 'theme_isgcorp');
-    $description = get_string('logo_desc', 'theme_isgcorp');
-    $setting = new admin_setting_configstoredfile($name, $title, $description, 'logo');
-    $setting->set_updatedcallback('theme_reset_all_caches');
-    $page->add($setting);
-
     // Cor primária da marca (vermelho ISG por padrão).
     $name = 'theme_isgcorp/brandcolor';
     $title = get_string('brandcolor', 'theme_isgcorp');

@@ -17,6 +17,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Universidade Corporativa ISG';
+$string['quizbuildertiptitle'] = 'Monte a avaliação em poucos passos';
+$string['quizbuildertiptext'] = 'Adicione as perguntas, defina a resposta correta e revise a pontuação. Para avaliações objetivas, recomendamos Múltipla escolha ou Verdadeiro/Falso.';
 $string['configtitle'] = 'ISG Corp';
 $string['choosereadme'] = 'Tema filho do Boost construído para a plataforma de e-learning da Universidade Corporativa ISG.';
 $string['generalsettings'] = 'Configurações gerais';
@@ -29,3 +31,4 @@ $string['navinicio'] = 'Início';
 $string['navtrilhas'] = 'Trilhas';
 $string['navcertificados'] = 'Certificados';
 $string['navadmin'] = 'Administração do site';
+$string['quizpassingpercentage'] = 'Percentual para aprovação: {$a}%';
