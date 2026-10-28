@@ -30,7 +30,9 @@ require_sesskey();
 $DB->get_record('local_isgcorp_trilha', ['id' => $id], '*', MUST_EXIST);
 
 $DB->delete_records('local_isgcorp_trilha_course', ['trilhaid' => $id]);
+$DB->delete_records('local_isgcorp_trilha_cert', ['trilhaid' => $id]);
 $DB->delete_records('local_isgcorp_trilha', ['id' => $id]);
+get_file_storage()->delete_area_files($context->id, 'local_isgcorp', 'coverimage', $id);
 
 redirect(
     new moodle_url('/local/isgcorp/manage.php'),

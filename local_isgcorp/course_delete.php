@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_sesskey();
 $courseid = required_param('courseid', PARAM_INT);
-if ($courseid === SITEID || !can_delete_course($courseid)) {
+if ($courseid === (int) SITEID || !can_delete_course($courseid)) {
     throw new required_capability_exception(
         context_course::instance($courseid),
         'moodle/course:delete',
@@ -27,7 +27,9 @@ $transaction = $DB->start_delegated_transaction();
 $DB->delete_records('local_isgcorp_trilha_course', ['courseid' => $courseid]);
 $DB->delete_records('local_isgcorp_lesson_progress', ['courseid' => $courseid]);
 $DB->delete_records('local_isgcorp_certificate', ['courseid' => $courseid]);
-delete_course($course, false);
+if (!delete_course($course, false)) {
+    $transaction->rollback(new moodle_exception('cannotdeletecourse'));
+}
 $transaction->allow_commit();
 
 redirect(

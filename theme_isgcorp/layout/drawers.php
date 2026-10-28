@@ -82,8 +82,11 @@ $hidefullheader = function_exists('theme_isgcorp_should_hide_full_header')
 $hidesecondarynavigation = function_exists('theme_isgcorp_should_hide_secondary_navigation')
     && theme_isgcorp_should_hide_secondary_navigation($PAGE);
 if (!$hidesecondarynavigation && $PAGE->has_secondary_navigation()) {
+    // A aba do painel so faz sentido na navegacao de Administracao do site,
+    // que e onde existe o no 'users'.
     if ($PAGE->context->contextlevel === CONTEXT_SYSTEM && function_exists('theme_isgcorp_is_privileged_user')
-            && theme_isgcorp_is_privileged_user() && !$PAGE->secondarynav->get('isgadmindashboard')) {
+            && theme_isgcorp_is_privileged_user() && $PAGE->secondarynav->get('users')
+            && !$PAGE->secondarynav->get('isgadmindashboard')) {
         $dashboardnode = navigation_node::create(
             get_string('admindashboard', 'local_isgcorp'),
             new moodle_url('/local/isgcorp/dashboard.php'),
@@ -149,6 +152,9 @@ if ($hidefullheader) {
     $overflow = '';
 }
 
+$isdashboard = in_array(theme_isgcorp_get_navigation_path($currenturl), ['/my/', '/my/index.php'], true);
+$dashboardhero = $isdashboard && isloggedin() && !isguestuser() ? theme_isgcorp_get_dashboard_hero_html() : '';
+
 $templatecontext = [
     'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), 'escape' => false]),
     'logourl' => theme_isgcorp_get_brand_asset_url('logo', 'brand-mark')->out(false),
@@ -172,6 +178,7 @@ $templatecontext = [
     'overflow' => $overflow,
     'headercontent' => $headercontent,
     'addblockbutton' => $addblockbutton,
+    'dashboardhero' => $dashboardhero,
 ];
 
 echo $OUTPUT->render_from_template('theme_boost/drawers', $templatecontext);

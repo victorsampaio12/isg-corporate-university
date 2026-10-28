@@ -55,9 +55,9 @@ $fromsql = "FROM {local_isgcorp_certname_log} log
             JOIN {user} actor ON actor.id = log.changedby
            WHERE " . implode(' AND ', $where);
 $selectsql = "SELECT log.id, log.userid, log.changedby, log.oldvalue, log.newvalue, log.timecreated,
-                    u.firstname AS studentfirstname, u.lastname AS studentlastname,
-                    u.username AS studentusername, u.email AS studentemail,
-                    actor.firstname AS actorfirstname, actor.lastname AS actorlastname";
+                    u.username AS studentusername, u.email AS studentemail, " .
+                    \core_user\fields::for_name()->get_sql('u', false, 'student', '', false)->selects . ", " .
+                    \core_user\fields::for_name()->get_sql('actor', false, 'actor', '', false)->selects;
 $ordersql = ' ORDER BY log.timecreated DESC, log.id DESC';
 
 $total = (int) $DB->count_records_sql('SELECT COUNT(log.id) ' . $fromsql, $params);
@@ -69,10 +69,7 @@ $records = $DB->get_records_sql(
 );
 
 $displayname = static function(stdClass $record, string $prefix): string {
-    return fullname((object) [
-        'firstname' => $record->{$prefix . 'firstname'},
-        'lastname' => $record->{$prefix . 'lastname'},
-    ]);
+    return fullname(username_load_fields_from_object(new stdClass(), $record, $prefix));
 };
 $csvsafe = static function(string $value): string {
     return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;

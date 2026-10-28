@@ -104,11 +104,21 @@ class block_isgcorpdashboard extends block_base {
      * Banner de boas-vindas.
      */
     protected function render_hero(): string {
+        global $OUTPUT;
+
+        // Com o tema ISG ativo, o banner e desenhado pelo tema, de ponta a ponta.
+        if (function_exists('theme_isgcorp_get_dashboard_hero_html')) {
+            return '';
+        }
+
         $destinationurl = $this->ensure_local_isgcorp_loaded()
             ? new moodle_url('/local/isgcorp/index.php')
             : new moodle_url('/course/index.php');
 
-        $bannerurl = theme_isgcorp_get_brand_asset_url('homebanner', 'hero-bg');
+        // A funcao vive no lib.php do tema, que so e carregado quando o isgcorp e o tema ativo.
+        $bannerurl = function_exists('theme_isgcorp_get_brand_asset_url')
+            ? theme_isgcorp_get_brand_asset_url('homebanner', 'hero-bg')
+            : $OUTPUT->image_url('hero-bg', 'theme_isgcorp');
         $html = '<div class="isg-hero" style="background-image:linear-gradient(90deg, rgba(88,0,3,.98) 0%, rgba(119,1,4,.88) 46%, rgba(119,1,4,.08) 100%),url(' . s($bannerurl->out(false)) . ')">';
         $html .=     '<h1>' . get_string('welcometitle', 'block_isgcorpdashboard') . '</h1>';
         $html .=     '<p>' . get_string('welcomesubtitle', 'block_isgcorpdashboard') . '</p>';
@@ -266,8 +276,8 @@ class block_isgcorpdashboard extends block_base {
     /**
      * "Seu progresso geral" — cards de estatística. Mostramos só
      * o que dá pra calcular com dado real do Moodle: cursos ativos
-     * (matrícula) e certificados conquistados (se o plugin
-     * mod_customcert estiver instalado). "Horas de aprendizagem" e
+     * (matrícula) e certificados de trilha conquistados (emitidos
+     * pelo local_isgcorp). "Horas de aprendizagem" e
      * "Pontuação" ficaram de fora de propósito — não existe
      * rastreamento nativo disso, e prefiro não inventar número.
      */
@@ -333,22 +343,22 @@ class block_isgcorpdashboard extends block_base {
     }
 
     /**
-     * Conta certificados emitidos pro usuário via mod_customcert,
-     * SE esse plugin estiver instalado. Retorna null se não
-     * estiver — sinal pra quem chama de "sem essa informação",
+     * Conta os certificados de trilha emitidos pro usuário pelo
+     * local_isgcorp. Retorna null se a tabela não existir (plugin
+     * ausente) — sinal pra quem chama de "sem essa informação",
      * diferente de "zero certificados".
      */
     protected function get_certificate_count(int $userid): ?int {
         global $DB;
 
         $dbman = $DB->get_manager();
-        $table = new \xmldb_table('local_isgcorp_certificate');
+        $table = new \xmldb_table('local_isgcorp_trilha_cert');
 
         if (!$dbman->table_exists($table)) {
             return null;
         }
 
-        return $DB->count_records('local_isgcorp_certificate', ['userid' => $userid]);
+        return $DB->count_records('local_isgcorp_trilha_cert', ['userid' => $userid]);
     }
 
     /**

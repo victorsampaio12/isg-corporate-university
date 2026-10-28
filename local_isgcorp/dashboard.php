@@ -52,8 +52,9 @@ if ($courseids) {
         $inparams + ['quiz' => 'quiz']
     );
 
-    $certificatewhere = "courseid {$insql}";
-    $certificateparams = $inparams;
+    // Certificados sao emitidos por trilha.
+    $certificatewhere = $trailid ? 'trilhaid = :certtrilhaid' : '1 = 1';
+    $certificateparams = $trailid ? ['certtrilhaid' => $trailid] : [];
     if ($fromtimestamp) {
         $certificatewhere .= ' AND timecreated >= :certificatefrom';
         $certificateparams['certificatefrom'] = $fromtimestamp;
@@ -62,7 +63,7 @@ if ($courseids) {
         $certificatewhere .= ' AND timecreated <= :certificateto';
         $certificateparams['certificateto'] = $totimestamp;
     }
-    $certificates = $DB->count_records_select('local_isgcorp_certificate', $certificatewhere, $certificateparams);
+    $certificates = $DB->count_records_select('local_isgcorp_trilha_cert', $certificatewhere, $certificateparams);
 }
 
 $trailcount = $trailid ? 1 : $DB->count_records('local_isgcorp_trilha');
@@ -108,9 +109,8 @@ foreach ($trails as $trail) {
     }
     $trailcertificates = (int)$DB->count_records_sql(
         "SELECT COUNT(cert.id)
-           FROM {local_isgcorp_certificate} cert
-           JOIN {local_isgcorp_trilha_course} tc ON tc.courseid = cert.courseid
-          WHERE tc.trilhaid = :trilhaid {$trailcertificatewhere}",
+           FROM {local_isgcorp_trilha_cert} cert
+          WHERE cert.trilhaid = :trilhaid {$trailcertificatewhere}",
         $trailcertificateparams
     );
     $maxstudents = max($maxstudents, $trailstudents);

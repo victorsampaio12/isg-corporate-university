@@ -2,6 +2,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'ISG Corp - Painel Início';
+$string['isgcorpdashboard:addinstance'] = 'Adicionar um novo bloco Painel Início ISG Corp';
+$string['isgcorpdashboard:myaddinstance'] = 'Adicionar um novo bloco Painel Início ISG Corp ao Painel';
 $string['welcometitle'] = 'Bem-vindo(a) à Universidade Corporativa ISG';
 $string['welcomesubtitle'] = 'Aprender hoje, transformar o amanhã.';
 $string['ctatext'] = 'Explorar trilhas';

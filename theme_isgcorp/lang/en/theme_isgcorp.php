@@ -32,3 +32,6 @@ $string['navtrilhas'] = 'Learning paths';
 $string['navcertificados'] = 'Certificates';
 $string['navadmin'] = 'Site administration';
 $string['quizpassingpercentage'] = 'Passing percentage: {$a}%';
+$string['herotitle'] = 'Welcome to <span>{$a} Corporate University</span>';
+$string['herosubtitle'] = 'Learn today, transform tomorrow.';
+$string['herocta'] = 'Explore learning paths';

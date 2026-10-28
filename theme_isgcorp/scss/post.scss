@@ -761,18 +761,18 @@ body.isg-learner.path-mod-quiz {
     #page-header { margin-bottom: 18px; padding: 24px 28px; border: 1px solid #eee2de; border-radius: 24px; background: linear-gradient(120deg, #fff 0%, #fff8f6 100%); box-shadow: 0 16px 38px rgba(42, 28, 29, .06); }
     #page-navbar, [data-region="activity-information"], .activity-navigation { display: none; }
     #page-header .page-context-header { margin: 0 !important; }
-    #page-header .page-header-headings h1 { margin: 0; color: #181421; font-size: clamp(28px, 3vw, 40px); font-weight: 900; letter-spacing: -.025em; }
+    #page-header .page-header-headings h1 { margin: 0; color: #181421; font-size: clamp(28px, 3vw, 40px); font-weight: 800; letter-spacing: -.025em; }
     #region-main { padding: 28px; border: 1px solid #eee5e1; border-radius: 24px; background: #fff; box-shadow: 0 18px 46px rgba(38, 27, 28, .06); }
     #region-main [role="main"] > h2:first-of-type { display: none; }
     .tertiary-navigation { margin: 0 0 18px; padding: 0; .row { margin: 0; } }
     .quizinfo, #feedback.generalbox { display: grid; gap: 10px; margin: 0 0 24px; padding: 22px 24px; border: 1px solid #efdfda; border-radius: 18px; background: #fff8f6; p { margin: 0; color: #514951; } }
     .quizattempt { margin: 0; padding: 0; background: transparent; }
     .quizattemptcounts { margin: 12px 0; color: #655e68; }
-    h3 { margin: 26px 0 14px; color: #211a29; font-size: 24px; font-weight: 900; }
+    h3 { margin: 26px 0 14px; color: #211a29; font-size: 24px; font-weight: 800; }
     .btn-primary, input[type="submit"].btn-primary { min-height: 42px; padding: 9px 18px; border-color: #8b0000; border-radius: 12px; background: #8b0000; font-weight: 800; box-shadow: none; &:hover, &:focus { border-color: #650000; background: #650000; } }
     .btn-secondary, .btn-outline-secondary { min-height: 40px; padding: 8px 16px; border: 1px solid #d8c9c5; border-radius: 12px; background: #fff; color: #650000; font-weight: 750; }
     .list-unstyled .card { overflow: hidden; border: 1px solid #eadfdb; border-radius: 18px; box-shadow: 0 12px 28px rgba(35, 25, 27, .05); }
-    .list-unstyled .card-header { padding: 15px 18px !important; background: #fff7f5; h4 { font-weight: 900; } }
+    .list-unstyled .card-header { padding: 15px 18px !important; background: #fff7f5; h4 { font-weight: 800; } }
     .quizreviewsummary { margin: 0; th, td { padding: 10px 16px; border-color: #eee5e1; } th { width: 34%; color: #4b424a; } }
     .que { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 18px; margin: 0 0 22px; border: 0; background: transparent;
         .info { width: auto; margin: 0; padding: 18px; border: 1px solid #eadfdb; border-radius: 18px; background: #fff8f6; box-shadow: none; h3 { margin: 0 0 10px; font-size: 16px; } }
@@ -2127,6 +2127,77 @@ body.isg-learner.path-mod-quiz {
 }
 
 // ---------------------------------------------------------------
+// Base do login do Boost 4.5. O Moodle 5.x removeu essas regras
+// junto com o layout antigo; como o tema fixa os templates de
+// login do 4.5 (templates/theme_boost/login.mustache e
+// templates/core/loginform.mustache), trazemos o CSS deles aqui.
+// No 4.5 elas so repetem o que o Boost ja define.
+// ---------------------------------------------------------------
+.pagelayout-login #region-main {
+    border: 0;
+    background-color: inherit;
+}
+
+.pagelayout-login #page div[role="main"] {
+    height: 100%;
+}
+
+.login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.login-container {
+    margin-bottom: 2rem;
+    padding: 3rem;
+    border-radius: $border-radius;
+    background-color: $white;
+    box-shadow: $box-shadow;
+
+    .login-languagemenu {
+        display: flex;
+        justify-content: flex-start;
+
+        .dropdown-menu {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    }
+
+    .login-divider {
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-top: $border-width solid $border-color;
+    }
+
+    h1.login-heading {
+        font-size: $h2-font-size;
+    }
+
+    .login-identityproviders .login-identityprovider-btn {
+        border: $border-width solid $border-color;
+    }
+
+    .divider {
+        width: $border-width;
+        height: $font-size-base * 2;
+        background-color: $gray-300;
+    }
+
+    .action-menu-trigger a {
+        margin: .5rem 0;
+    }
+}
+
+@include media-breakpoint-up(md) {
+    .login-container {
+        width: 500px !important;
+    }
+}
+
+// ---------------------------------------------------------------
 // Login: mostra a logo da universidade no topo do card e suaviza
 // o visual geral da tela sem mexer na estrutura do Moodle.
 // ---------------------------------------------------------------
@@ -2228,7 +2299,10 @@ body.isg-learner.path-mod-quiz {
         border-radius: 12px !important;
     }
 
-    .login-form-password .toggle-sensitive-wrapper .input-group-append {
+    // Moodle 4.5 envolve o botao em .input-group-append; no 5.x ele e
+    // filho direto do wrapper.
+    .login-form-password .toggle-sensitive-wrapper .input-group-append,
+    .login-form-password .toggle-sensitive-wrapper > .toggle-sensitive-btn {
         position: absolute;
         top: 50%;
         right: 0.6rem;
@@ -2527,7 +2601,7 @@ body.isg-learner.path-mod-quiz {
     margin: 0 0 10px;
     font-size: clamp(34px, 4vw, 52px);
     line-height: 1.02;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: -0.03em;
     color: #181623;
 }
@@ -2597,7 +2671,7 @@ body.isg-learner.path-mod-quiz {
     margin-bottom: 12px;
     font-size: 40px;
     line-height: 1;
-    font-weight: 900;
+    font-weight: 800;
     color: #181623;
 }
 
@@ -2627,7 +2701,7 @@ body.isg-learner.path-mod-quiz {
 .isg-module-panel-title {
     margin: 0;
     font-size: 30px;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: -0.02em;
     color: #181623;
 }
@@ -2664,7 +2738,7 @@ body.isg-learner.path-mod-quiz {
     align-items: center;
     justify-content: center;
     font-size: 18px;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .isg-module-lesson-media {
@@ -2700,7 +2774,7 @@ body.isg-learner.path-mod-quiz {
 .isg-module-lesson-title {
     margin: 0 0 8px;
     font-size: 24px;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.15;
     color: #1d1825;
 }
@@ -3462,7 +3536,7 @@ body[id^="page-question-type-"] {
 .isg-lesson-block-title {
     margin: 0;
     font-size: 28px;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: -0.02em;
     color: #1d1825;
 }
@@ -3591,7 +3665,7 @@ body[id^="page-question-type-"] {
 .isg-lesson-sidebar-title {
     margin: 0 0 16px;
     font-size: 15px;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.02em;
     color: #241d2d;
 }
@@ -3672,7 +3746,7 @@ body[id^="page-question-type-"] {
     align-items: center;
     justify-content: center;
     font-size: 13px;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .isg-lesson-sidebar-copy {
@@ -3838,5 +3912,347 @@ body#page-user-edit .mform {
     .isg-sidebar-brand-mark {
         width: min(88px, 100%);
         max-height: none;
+    }
+}
+
+// ---------------------------------------------------------------
+// Refino visual (camada final)
+//
+// Deixa a interface mais suave e moderna sem mexer em layout,
+// espacamentos ou paleta: so sombras mais difusas, bordas mais
+// leves, transicoes consistentes, foco acessivel e tipografia
+// mais limpa. Fica no fim do arquivo pra prevalecer sobre os
+// estilos acima com a mesma especificidade.
+// ---------------------------------------------------------------
+$isg-ease: cubic-bezier(.2, .7, .2, 1);
+$isg-border-soft: rgba(28, 20, 22, .07);
+$isg-shadow-xs: 0 1px 2px rgba(28, 20, 22, .04);
+$isg-shadow-sm: 0 1px 2px rgba(28, 20, 22, .04), 0 4px 14px rgba(28, 20, 22, .04);
+$isg-shadow-md: 0 2px 4px rgba(28, 20, 22, .03), 0 12px 32px rgba(28, 20, 22, .07);
+$isg-focus-ring: 0 0 0 3px rgba($isg-red-700, .16);
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+::selection {
+    background: rgba($isg-red-700, .14);
+}
+
+// Titulos: peso 900 pesava demais; 800 com tracking levemente
+// negativo fica mais moderno sem perder hierarquia.
+h1, h2, h3, h4, .h1, .h2, .h3, .h4,
+.isg-trilhas-title, .isg-trilha-title {
+    letter-spacing: -.015em;
+}
+
+// Cards e paineis: borda translucida + sombra em camadas.
+.isg-course-card,
+.isg-stat-card,
+.isg-panel,
+.isg-empty,
+.isg-cert-card,
+.isg-trilha-card,
+.isg-guide-card,
+.block_isgcorpdashboard .isg-dashboard-course-card {
+    border-color: $isg-border-soft;
+    box-shadow: $isg-shadow-sm;
+    transition: transform .22s $isg-ease, box-shadow .22s $isg-ease, border-color .22s $isg-ease;
+}
+
+.isg-cert-card {
+    border-left-color: $isg-red-700;
+}
+
+a.isg-course-card:hover,
+.isg-course-card:hover,
+.block_isgcorpdashboard .isg-dashboard-course-card:hover,
+.isg-cert-card:hover {
+    border-color: rgba($isg-red-700, .14);
+    box-shadow: $isg-shadow-md;
+}
+
+.isg-cert-card:hover {
+    border-left-color: $isg-red-700;
+}
+
+.isg-trilha-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba($isg-red-700, .12);
+    box-shadow: $isg-shadow-md;
+}
+
+.isg-trilha-arrow,
+.isg-dashboard-card-arrow {
+    transition: transform .22s $isg-ease, background-color .22s $isg-ease, color .22s $isg-ease;
+}
+
+.isg-hero {
+    box-shadow: $isg-shadow-md;
+}
+
+.isg-hero-cta {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
+    transition: transform .2s $isg-ease, box-shadow .2s $isg-ease, color .2s $isg-ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, .16);
+    }
+}
+
+// Sidebar: transicao suave e indicador sutil no item ativo.
+.isg-sidebar-link {
+    position: relative;
+    transition: background-color .2s $isg-ease, color .2s $isg-ease;
+
+    &.active::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        bottom: 10px;
+        left: 0;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
+        background: rgba(255, 255, 255, .85);
+    }
+
+    &:focus-visible {
+        outline: 0;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, .45);
+    }
+}
+
+// Topbar mais leve.
+.navbar.fixed-top {
+    border-bottom: 1px solid $isg-border-soft;
+    box-shadow: none;
+}
+
+// Botoes: transicoes consistentes e sombras menos marcadas.
+.btn {
+    transition: color .18s $isg-ease, background-color .18s $isg-ease, border-color .18s $isg-ease,
+        box-shadow .18s $isg-ease, transform .18s $isg-ease;
+}
+
+.btn-primary:not(:disabled):hover {
+    box-shadow: 0 6px 16px rgba($isg-red-700, .2);
+}
+
+.isg-search-btn {
+    box-shadow: 0 6px 16px rgba($isg-red-700, .16);
+    transition: box-shadow .2s $isg-ease, transform .2s $isg-ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba($isg-red-700, .22);
+    }
+}
+
+// Campos: borda mais leve e anel de foco na cor da marca.
+.form-control,
+.form-select,
+.custom-select,
+.isg-search-input,
+.isg-sort-select {
+    border-color: rgba(28, 20, 22, .12);
+    transition: border-color .18s $isg-ease, box-shadow .18s $isg-ease, background-color .18s $isg-ease;
+
+    &:hover:not(:disabled):not(:focus) {
+        border-color: rgba(28, 20, 22, .2);
+    }
+
+    &:focus {
+        border-color: rgba($isg-red-700, .45);
+        outline: 0;
+        box-shadow: $isg-focus-ring;
+    }
+}
+
+// Abas de categoria das trilhas.
+.isg-trilha-tab {
+    transition: color .18s $isg-ease, border-color .18s $isg-ease;
+}
+
+// Barras de progresso animam ao carregar/atualizar.
+.isg-course-progress-fill,
+.progress-bar {
+    transition: width .6s $isg-ease;
+}
+
+// Tabelas e cards nativos do Moodle alinhados ao mesmo tom.
+.card {
+    border-color: $isg-border-soft;
+}
+
+.table > :not(caption) > * > * {
+    border-bottom-color: $isg-border-soft;
+}
+
+.dropdown-menu {
+    border-color: $isg-border-soft;
+    border-radius: 12px;
+    box-shadow: $isg-shadow-md;
+}
+
+.dropdown-item {
+    transition: background-color .15s $isg-ease, color .15s $isg-ease;
+}
+
+// Scrollbar discreta no conteudo principal.
+#page.drawers {
+    scrollbar-color: rgba(28, 20, 22, .2) transparent;
+    scrollbar-width: thin;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+    }
+
+    .isg-trilha-card:hover,
+    .isg-hero-cta:hover,
+    .isg-search-btn:hover {
+        transform: none;
+    }
+}
+
+// ---------------------------------------------------------------
+// Banner do Inicio (theme_isgcorp_get_dashboard_hero_html).
+// Ocupa a largura toda da area de conteudo, encostado na barra
+// superior, na proporcao do layout do Figma (~1617 x 330). A imagem
+// e so o fundo; texto e botao sao HTML e escalam com a tela.
+// ---------------------------------------------------------------
+.isg-dashboard-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 280px;
+    padding: 40px 24px;
+    overflow: hidden;
+    background-color: $isg-red-700;
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: cover;
+    color: #fff;
+}
+
+.isg-dashboard-hero-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+}
+
+.isg-dashboard-hero-title {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(28px, 2.6vw, 46px);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -.01em;
+
+    > span {
+        display: block;
+    }
+}
+
+// "ISG" com o chapeu de formatura inclinado por cima, como no Figma.
+.isg-dashboard-hero-brand {
+    position: relative;
+    display: inline-block;
+}
+
+.isg-dashboard-hero-cap {
+    position: absolute;
+    top: -.52em;
+    right: -.42em;
+    width: .98em;
+    height: auto;
+    transform: rotate(14deg);
+    filter: drop-shadow(0 2px 3px rgba(40, 0, 2, .25));
+}
+
+.isg-dashboard-hero-subtitle {
+    margin: .35em 0 0;
+    color: #fff;
+    font-size: clamp(15px, 1.15vw, 20px);
+    font-weight: 700;
+}
+
+.isg-dashboard-hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: clamp(20px, 2vw, 34px);
+    padding: 13px 22px;
+    border: 1px solid rgba(255, 255, 255, .06);
+    border-radius: 6px;
+    background: $isg-red-800;
+    box-shadow: 0 10px 24px rgba(40, 0, 2, .35);
+    color: #fff;
+    font-size: clamp(14px, 1vw, 16px);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color .2s $isg-ease, transform .2s $isg-ease, box-shadow .2s $isg-ease;
+
+    &:hover,
+    &:focus {
+        background: $isg-red-900;
+        color: #fff;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(40, 0, 2, .42);
+    }
+
+    &:focus-visible {
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, .55);
+    }
+}
+
+// Seta ">" do botao.
+.isg-dashboard-hero-cta-icon {
+    width: 9px;
+    height: 9px;
+    border-top: 2px solid currentColor;
+    border-right: 2px solid currentColor;
+    transform: rotate(45deg);
+}
+
+@include media-breakpoint-up(md) {
+    // #page.drawers tem 3rem de respiro lateral no Boost; o banner o anula.
+    .isg-dashboard-hero {
+        margin: 0 -3rem;
+        padding: 40px 4.3%;
+    }
+}
+
+@media (min-width: 992px) {
+    body.has-isg-sidebar .isg-dashboard-hero {
+        min-height: calc((100vw - #{$isg-sidebar-width}) * .204);
+    }
+}
+
+// Celular. Largura explicita: media-breakpoint-down(sm) muda de sentido
+// entre o Bootstrap 4 (Moodle 4.5) e o 5 (Moodle 5.x).
+@media (max-width: 575.98px) {
+    .isg-dashboard-hero {
+        background-position: 70% center;
+    }
+
+    .isg-dashboard-hero-title > span {
+        display: inline;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .isg-dashboard-hero-cta:hover,
+    .isg-dashboard-hero-cta:focus {
+        transform: none;
     }
 }

@@ -14,8 +14,6 @@ require_once(__DIR__ . '/lib.php');
 
 require_login();
 
-local_isgcorp_sync_user_certificates((int)$USER->id);
-
 $page = optional_param('page', 0, PARAM_INT);
 $perpage = 8;
 $context = context_system::instance();
@@ -25,9 +23,12 @@ $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('mycertificates', 'local_isgcorp'));
 
-$sql = "SELECT ci.id, ci.timecreated, ci.code, c.id AS courseid, c.fullname AS certname
-          FROM {local_isgcorp_certificate} ci
-          JOIN {course} c ON c.id = ci.courseid
+// Depois do set_context: a emissao formata o conteudo das aulas.
+local_isgcorp_sync_user_certificates((int)$USER->id);
+
+$sql = "SELECT ci.id, ci.timecreated, ci.code, t.id AS trilhaid, t.name AS certname
+          FROM {local_isgcorp_trilha_cert} ci
+          JOIN {local_isgcorp_trilha} t ON t.id = ci.trilhaid
          WHERE ci.userid = :userid
       ORDER BY ci.timecreated DESC";
 $allcerts = $DB->get_records_sql($sql, ['userid' => $USER->id]);
@@ -69,7 +70,7 @@ if (!$allcerts) {
     $pagedcerts = array_slice(array_values($allcerts), $page * $perpage, $perpage);
     echo '<div class="isg-cert-grid">';
     foreach ($pagedcerts as $certificate) {
-        $downloadurl = new moodle_url('/local/isgcorp/certificate.php', ['courseid' => $certificate->courseid]);
+        $downloadurl = new moodle_url('/local/isgcorp/certificate.php', ['trilhaid' => $certificate->trilhaid]);
         $date = userdate($certificate->timecreated, get_string('certdateformat', 'local_isgcorp'));
 
         echo '<div class="isg-cert-card">';

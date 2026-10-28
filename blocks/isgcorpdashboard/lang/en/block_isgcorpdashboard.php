@@ -2,6 +2,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'ISG Corp - Home dashboard';
+$string['isgcorpdashboard:addinstance'] = 'Add a new ISG Corp home dashboard block';
+$string['isgcorpdashboard:myaddinstance'] = 'Add a new ISG Corp home dashboard block to Dashboard';
 $string['welcometitle'] = 'Welcome to ISG Corporate University';
 $string['welcomesubtitle'] = 'Learn today, transform tomorrow.';
 $string['ctatext'] = 'Explore learning paths';
