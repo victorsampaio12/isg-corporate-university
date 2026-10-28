@@ -52,9 +52,9 @@ echo '</div>';
 
 echo '<div class="isg-stat-grid mb-4">';
 $stats = [
-    ['&#127942;', $totalcount, get_string('certcount', 'local_isgcorp')],
-    ['&#128200;', $advancedcount, get_string('certadvanced', 'local_isgcorp')],
-    ['&#128197;', $lastyear ?? '&mdash;', get_string('certlast', 'local_isgcorp')],
+    [local_isgcorp_icon('award'), $totalcount, get_string('certcount', 'local_isgcorp')],
+    [local_isgcorp_icon('trending-up'), $advancedcount, get_string('certadvanced', 'local_isgcorp')],
+    [local_isgcorp_icon('calendar'), $lastyear ?? '&mdash;', get_string('certlast', 'local_isgcorp')],
 ];
 foreach ($stats as [$icon, $value, $label]) {
     echo '<div class="isg-stat-card"><div class="isg-stat-icon">' . $icon . '</div><div>';
@@ -76,7 +76,7 @@ if (!$allcerts) {
         echo '<div class="isg-cert-card">';
         echo '<div class="isg-cert-top"><span class="isg-cert-label">';
         echo get_string('certificatelabel', 'local_isgcorp');
-        echo '</span><span class="isg-cert-badge">&#127942;</span></div>';
+        echo '</span><span class="isg-cert-badge">' . local_isgcorp_icon('award') . '</span></div>';
         echo '<div class="isg-cert-title">' . format_string($certificate->certname) . '</div>';
         echo '<div class="isg-cert-date">' . get_string('completedon', 'local_isgcorp', $date) . '</div>';
         $downloadlabel = get_string('download', 'local_isgcorp');

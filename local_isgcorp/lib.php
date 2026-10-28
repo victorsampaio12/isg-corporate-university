@@ -21,6 +21,40 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/completionlib.php');
 
 /**
+ * Icone em linha (SVG, traco fino, herda a cor do texto), no estilo Lucide.
+ * Substitui os emojis das paginas para manter um visual limpo e monocromatico.
+ *
+ * @param string $name Nome do icone (ver $paths).
+ * @param string $class Classes extras do elemento svg.
+ * @return string HTML do svg, ou '' se o nome nao existir.
+ */
+function local_isgcorp_icon(string $name, string $class = ''): string {
+    static $paths = [
+        'search' => '<circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/>',
+        'book-open' => '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+        'level' => '<path d="M5 20v-5"/><path d="M12 20V10"/><path d="M19 20V4"/>',
+        'clock' => '<circle cx="12" cy="12" r="9.5"/><path d="M12 6.5V12l3.5 2"/>',
+        'award' => '<circle cx="12" cy="8.5" r="6"/><path d="m15.48 13.4 1.52 8.6-5-3-5 3 1.52-8.6"/>',
+        'trending-up' => '<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+        'calendar' => '<rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M16 2.5v4"/><path d="M8 2.5v4"/><path d="M3 10h18"/>',
+        'graduation-cap' => '<path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+        'library' => '<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>',
+        'check-circle' => '<circle cx="12" cy="12" r="9.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+        'file-text' => '<path d="M14.5 2.5H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2.5V8h6"/><path d="M8 13h8"/><path d="M8 17h5"/>',
+        'pie-chart' => '<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
+        'users' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        'play' => '<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/>',
+        'star' => '<path d="M11.52 2.3a.53.53 0 0 1 .96 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.02a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .29-.9l5.17-.76a2.12 2.12 0 0 0 1.6-1.16z"/>',
+    ];
+    if (!isset($paths[$name])) {
+        return '';
+    }
+    $classes = trim('isg-icon isg-icon-' . $name . ' ' . $class);
+    return '<svg class="' . s($classes) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
+        . 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $paths[$name] . '</svg>';
+}
+
+/**
  * Garante o campo personalizado de curso "Carga horaria", usado na soma
  * de horas do certificado. Chamado na instalacao e no upgrade.
  */

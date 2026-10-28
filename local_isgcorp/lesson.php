@@ -141,7 +141,7 @@ echo     '<a class="isg-back-link" href="' . $backurl->out() . '">&larr; ' . get
 echo     '<div class="isg-lesson-layout">';
 echo         '<main class="isg-lesson-main">';
 echo             '<section class="isg-lesson-hero">';
-echo                 '<div class="isg-lesson-hero-icon">&#9654;</div>';
+echo                 '<div class="isg-lesson-hero-icon">' . local_isgcorp_icon('play') . '</div>';
 echo                 '<div class="isg-lesson-hero-copy">';
 echo                     '<h1 class="isg-lesson-title">' . s($currentlesson['name']) . '</h1>';
 echo                     '<div class="isg-lesson-meta">';

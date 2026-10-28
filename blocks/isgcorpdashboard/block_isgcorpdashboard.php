@@ -101,6 +101,18 @@ class block_isgcorpdashboard extends block_base {
     }
 
     /**
+     * Icone monocromatico do local_isgcorp (vazio se o plugin nao estiver instalado).
+     *
+     * @param string $name
+     * @return string
+     */
+    protected function icon(string $name): string {
+        return $this->ensure_local_isgcorp_loaded() && function_exists('local_isgcorp_icon')
+            ? local_isgcorp_icon($name)
+            : '';
+    }
+
+    /**
      * Banner de boas-vindas.
      */
     protected function render_hero(): string {
@@ -162,11 +174,9 @@ class block_isgcorpdashboard extends block_base {
             $barclass = $this->resolve_progress_bar_class($progressdata['statusclass']);
             $courseurl = $this->resolve_course_target_url($course);
             $barwidth = $percent ?? 0;
-            $iconclasses = ['fa-shield', 'fa-file-excel-o', 'fa-lock', 'fa-user-o'];
-            $iconclass = $iconclasses[((int) $course->id) % count($iconclasses)];
 
             $html .= '<a class="isg-course-card isg-dashboard-course-card" href="' . $courseurl->out() . '">';
-            $html .=     '<span class="isg-dashboard-course-icon"><i class="fa ' . $iconclass . '" aria-hidden="true"></i></span>';
+            $html .=     '<span class="isg-dashboard-course-icon">' . $this->icon('book-open') . '</span>';
             $html .=     '<span class="isg-dashboard-course-content">';
             $html .=         '<span class="isg-course-status">' . $statuslabel . '</span>';
             $html .=         '<span class="isg-course-title">' . format_string($course->fullname) . '</span>';
@@ -292,7 +302,7 @@ class block_isgcorpdashboard extends block_base {
         $html .= '<div class="isg-stat-grid">';
 
         $html .= '<div class="isg-stat-card">';
-        $html .=     '<div class="isg-stat-icon">&#128214;</div>';
+        $html .=     '<div class="isg-stat-icon">' . $this->icon('book-open') . '</div>';
         $html .=     '<div>';
         $html .=         '<div class="isg-stat-label">' . get_string('statactivecourses', 'block_isgcorpdashboard') . '</div>';
         $html .=         '<div class="isg-stat-value">' . $activecourses . '</div>';
@@ -303,7 +313,7 @@ class block_isgcorpdashboard extends block_base {
         $certcount = $this->get_certificate_count($USER->id);
         if ($certcount !== null) {
             $html .= '<div class="isg-stat-card">';
-            $html .=     '<div class="isg-stat-icon">&#127942;</div>';
+            $html .=     '<div class="isg-stat-icon">' . $this->icon('award') . '</div>';
             $html .=     '<div>';
             $html .=         '<div class="isg-stat-label">' . get_string('statcertificates', 'block_isgcorpdashboard') . '</div>';
             $html .=         '<div class="isg-stat-value">' . $certcount . '</div>';
@@ -315,7 +325,7 @@ class block_isgcorpdashboard extends block_base {
         $hours = $this->get_learning_hours($USER->id);
         if ($hours !== null) {
             $html .= '<div class="isg-stat-card">';
-            $html .=     '<div class="isg-stat-icon">&#128337;</div>';
+            $html .=     '<div class="isg-stat-icon">' . $this->icon('clock') . '</div>';
             $html .=     '<div>';
             $html .=         '<div class="isg-stat-label">' . get_string('stathours', 'block_isgcorpdashboard') . '</div>';
             $html .=         '<div class="isg-stat-value">' . $hours . 'h</div>';
@@ -327,7 +337,7 @@ class block_isgcorpdashboard extends block_base {
         $points = $this->get_total_points($USER->id);
         if ($points !== null) {
             $html .= '<div class="isg-stat-card">';
-            $html .=     '<div class="isg-stat-icon">&#11088;</div>';
+            $html .=     '<div class="isg-stat-icon">' . $this->icon('star') . '</div>';
             $html .=     '<div>';
             $html .=         '<div class="isg-stat-label">' . get_string('statpoints', 'block_isgcorpdashboard') . '</div>';
             $html .=         '<div class="isg-stat-value">' . $points . '</div>';
@@ -675,7 +685,7 @@ class block_isgcorpdashboard extends block_base {
             $html .=         '<div class="isg-trilha-desc">' . s($description) . '</div>';
             $html .=         '<div class="isg-trilha-meta">';
             $html .=             '<span>' . $levelstring . '</span>';
-            $html .=             '<span>&#9201; ' . $trilha->estimatedhours . 'h</span>';
+            $html .=             '<span>' . $this->icon('clock') . $trilha->estimatedhours . 'h</span>';
             $html .=         '</div>';
             $html .=     '</div>';
             $html .= '</a>';

@@ -110,7 +110,7 @@ echo '</nav>';
 echo '<section class="isg-trilha-hero">';
 echo     '<div class="isg-trilha-hero-copy">';
 echo         '<div class="isg-trilha-hero-head">';
-echo             '<div class="isg-trilha-hero-icon">&#128640;</div>';
+echo             '<div class="isg-trilha-hero-icon">' . local_isgcorp_icon('graduation-cap') . '</div>';
 echo             '<div class="isg-trilha-hero-heading">';
 echo                 '<span class="isg-trilha-kicker">' . get_string('learningpathlabel', 'local_isgcorp') . '</span>';
 echo                 '<h1 class="isg-trilhas-title isg-trilha-hero-title">' . format_string($trilha->name) . '</h1>';
@@ -121,10 +121,10 @@ echo             '</div>';
 echo         '</div>';
 
 echo         '<div class="isg-trilha-hero-meta">';
-echo             '<span class="isg-trilha-meta-pill">&#128214; ' . $coursecount . ' ' . get_string('coursescount', 'local_isgcorp') . '</span>';
-echo             '<span class="isg-trilha-meta-pill">&#128202; ' . s($levelstring) . '</span>';
+echo             '<span class="isg-trilha-meta-pill">' . local_isgcorp_icon('book-open') . $coursecount . ' ' . get_string('coursescount', 'local_isgcorp') . '</span>';
+echo             '<span class="isg-trilha-meta-pill">' . local_isgcorp_icon('level') . s($levelstring) . '</span>';
 if (!empty($trilha->estimatedhours)) {
-    echo         '<span class="isg-trilha-meta-pill">&#9201; ' . (int) $trilha->estimatedhours . 'h</span>';
+    echo         '<span class="isg-trilha-meta-pill">' . local_isgcorp_icon('clock') . (int) $trilha->estimatedhours . 'h</span>';
 }
 echo         '</div>';
 

@@ -35,3 +35,5 @@ $string['quizpassingpercentage'] = 'Percentual para aprovação: {$a}%';
 $string['herotitle'] = 'Bem-vindo(a) à <span>Universidade Corporativa {$a}</span>';
 $string['herosubtitle'] = 'Aprender hoje, transformar o amanhã.';
 $string['herocta'] = 'Explorar trilhas';
+$string['loginsubtitle'] = 'Entre para continuar sua jornada de aprendizagem.';
+$string['loginwelcome'] = 'Que bom ter você aqui!';

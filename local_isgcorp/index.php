@@ -107,7 +107,7 @@ echo       '<option value="relevance" ' . ($sort === 'relevance' ? 'selected' : 
 echo       '<option value="name" ' . ($sort === 'name' ? 'selected' : '') . '>' . get_string('sortname', 'local_isgcorp') . '</option>';
 echo       '<option value="hours" ' . ($sort === 'hours' ? 'selected' : '') . '>' . get_string('sorthours', 'local_isgcorp') . '</option>';
 echo     '</select>';
-echo     '<button type="submit" class="isg-search-btn">&#128269;</button>';
+echo     '<button type="submit" class="isg-search-btn" aria-label="' . s(get_string('search')) . '">' . local_isgcorp_icon('search') . '</button>';
 echo   '</form>';
 echo '</div>';
 
@@ -174,8 +174,8 @@ if (empty($trilhas)) {
         echo         '</div>';
 
         echo         '<div class="isg-trilha-meta">';
-        echo             '<span class="isg-trilha-meta-item">&#128214; ' . $coursecount . ' ' . get_string('coursescount', 'local_isgcorp') . '</span>';
-        echo             '<span class="isg-trilha-meta-item">&#128202; ' . s($levelstring) . '</span>';
+        echo             '<span class="isg-trilha-meta-item">' . local_isgcorp_icon('book-open') . $coursecount . ' ' . get_string('coursescount', 'local_isgcorp') . '</span>';
+        echo             '<span class="isg-trilha-meta-item">' . local_isgcorp_icon('level') . s($levelstring) . '</span>';
         echo         '</div>';
         echo     '</div>';
         echo '</a>';

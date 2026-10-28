@@ -112,15 +112,15 @@ echo $OUTPUT->header();
 echo '<div class="isg-learner-page isg-course-page">';
 echo     '<section class="isg-module-hero">';
 echo         '<div class="isg-module-hero-main">';
-echo             '<div class="isg-module-hero-icon">&#128640;</div>';
+echo             '<div class="isg-module-hero-icon">' . local_isgcorp_icon('book-open') . '</div>';
 echo             '<div class="isg-module-hero-copy">';
 echo                 '<h1 class="isg-module-title">' . format_string($course->fullname, true, ['context' => $context]) . '</h1>';
 if ($summaryhtml !== '') {
     echo             '<div class="isg-module-summary">' . $summaryhtml . '</div>';
 }
 echo                 '<div class="isg-module-meta">';
-echo                     '<span class="isg-module-pill">&#128196; ' . ($totallessons ?: 0) . ' ' . get_string('courselessonscount', 'local_isgcorp') . '</span>';
-echo                     '<span class="isg-module-pill">&#128202; ' . ($progresspercent ?: 0) . '%</span>';
+echo                     '<span class="isg-module-pill">' . local_isgcorp_icon('file-text') . ($totallessons ?: 0) . ' ' . get_string('courselessonscount', 'local_isgcorp') . '</span>';
+echo                     '<span class="isg-module-pill">' . local_isgcorp_icon('pie-chart') . ($progresspercent ?: 0) . '%</span>';
 echo                 '</div>';
 echo                 '<div class="isg-module-actions">';
 $primaryicon = $primaryisdownload ? ' &#8595;' : ' &rarr;';
