@@ -21,6 +21,82 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/completionlib.php');
 
 /**
+ * Icone em linha (SVG, traco fino, herda a cor do texto), no estilo Lucide.
+ * Substitui os emojis das paginas para manter um visual limpo e monocromatico.
+ *
+ * @param string $name Nome do icone (ver $paths).
+ * @param string $class Classes extras do elemento svg.
+ * @return string HTML do svg, ou '' se o nome nao existir.
+ */
+function local_isgcorp_icon(string $name, string $class = ''): string {
+    static $paths = [
+        'search' => '<circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/>',
+        'book-open' => '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+        'level' => '<path d="M5 20v-5"/><path d="M12 20V10"/><path d="M19 20V4"/>',
+        'clock' => '<circle cx="12" cy="12" r="9.5"/><path d="M12 6.5V12l3.5 2"/>',
+        'award' => '<circle cx="12" cy="8.5" r="6"/><path d="m15.48 13.4 1.52 8.6-5-3-5 3 1.52-8.6"/>',
+        'trending-up' => '<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+        'calendar' => '<rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M16 2.5v4"/><path d="M8 2.5v4"/><path d="M3 10h18"/>',
+        'graduation-cap' => '<path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+        'library' => '<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>',
+        'check-circle' => '<circle cx="12" cy="12" r="9.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+        'file-text' => '<path d="M14.5 2.5H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2.5V8h6"/><path d="M8 13h8"/><path d="M8 17h5"/>',
+        'pie-chart' => '<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
+        'users' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        'play' => '<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/>',
+        'star' => '<path d="M11.52 2.3a.53.53 0 0 1 .96 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.02a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .29-.9l5.17-.76a2.12 2.12 0 0 0 1.6-1.16z"/>',
+    ];
+    if (!isset($paths[$name])) {
+        return '';
+    }
+    $classes = trim('isg-icon isg-icon-' . $name . ' ' . $class);
+    return '<svg class="' . s($classes) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
+        . 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $paths[$name] . '</svg>';
+}
+
+/**
+ * Garante o campo personalizado de curso "Carga horaria", usado na soma
+ * de horas do certificado. Chamado na instalacao e no upgrade.
+ */
+function local_isgcorp_ensure_workload_field(): void {
+    global $DB;
+
+    $handler = \core_course\customfield\course_handler::create();
+    $hoursfield = $DB->get_record('customfield_field', [
+        'shortname' => 'isg_cargahoraria',
+    ]);
+    if (!$hoursfield) {
+        $categoryrecord = (object) [
+            'name' => 'Universidade Corporativa ISG',
+            'component' => $handler->get_component(),
+            'area' => $handler->get_area(),
+            'itemid' => $handler->get_itemid(),
+            'contextid' => $handler->get_configuration_context()->id,
+            'sortorder' => 0,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+        $category = \core_customfield\category_controller::create(0, $categoryrecord, $handler);
+        $category->save();
+
+        $fieldrecord = (object) [
+            'categoryid' => $category->get('id'),
+            'type' => 'text',
+            'name' => 'Carga horaria (horas)',
+            'shortname' => 'isg_cargahoraria',
+            'description' => 'Carga horaria usada na soma do certificado da trilha.',
+            'descriptionformat' => FORMAT_PLAIN,
+            'sortorder' => 0,
+            'configdata' => json_encode(['defaultvalue' => '', 'displaysize' => 10, 'maxlength' => 10]),
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ];
+        $field = \core_customfield\field_controller::create(0, $fieldrecord, $category);
+        $field->save();
+    }
+}
+
+/**
  * Returns the Moodle full name used on certificates.
  */
 function local_isgcorp_get_certificate_name(int $userid): string {
@@ -320,6 +396,8 @@ function local_isgcorp_create_course_assessment(int $courseid, string $name): \s
     [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'quiz', (int)$section->section);
 
     $moduleinfo->name = clean_param($name, PARAM_TEXT);
+    // add_moduleinfo() le o idnumber da atividade; sem ele o PHP avisa "Undefined property".
+    $moduleinfo->cmidnumber = '';
     $moduleinfo->timeopen = 0;
     $moduleinfo->timeclose = 0;
     $moduleinfo->timelimit = 0;
@@ -358,52 +436,101 @@ function local_isgcorp_create_course_assessment(int $courseid, string $name): \s
 }
 
 /**
- * Returns an existing issue or creates one for an approved course.
+ * Indica se o usuario concluiu todos os modulos (cursos) de uma trilha.
  *
- * @param int $courseid
+ * Um modulo conta como concluido quando todas as aulas foram vistas e,
+ * se ele tiver avaliacao, o aluno foi aprovado nela.
+ *
+ * @param int $trilhaid
+ * @param int $userid
+ * @return bool
+ */
+function local_isgcorp_is_trilha_complete(int $trilhaid, int $userid): bool {
+    $courses = local_isgcorp_get_trilha_courses($trilhaid);
+    if (empty($courses)) {
+        return false;
+    }
+
+    foreach ($courses as $course) {
+        if ((local_isgcorp_get_course_progress_data($course, $userid)['percent'] ?? 0) < 100) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Proximo modulo da trilha que o usuario ainda nao concluiu.
+ *
+ * @param int $trilhaid
+ * @param int $userid
+ * @param int $currentcourseid Modulo atual, ignorado na busca.
+ * @return stdClass|null
+ */
+function local_isgcorp_get_next_trilha_course(int $trilhaid, int $userid, int $currentcourseid = 0): ?\stdClass {
+    foreach (local_isgcorp_get_trilha_courses($trilhaid) as $course) {
+        if ((int) $course->id === $currentcourseid) {
+            continue;
+        }
+        if ((local_isgcorp_get_course_progress_data($course, $userid)['percent'] ?? 0) < 100) {
+            return $course;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Retorna o certificado da trilha, emitindo-o se o usuario ja concluiu
+ * todos os modulos.
+ *
+ * @param int $trilhaid
  * @param int $userid
  * @return stdClass
  */
-function local_isgcorp_get_or_create_certificate(int $courseid, int $userid): \stdClass {
+function local_isgcorp_get_or_create_trilha_certificate(int $trilhaid, int $userid): \stdClass {
     global $DB;
 
-    $conditions = ['userid' => $userid, 'courseid' => $courseid];
-    $issue = $DB->get_record('local_isgcorp_certificate', $conditions);
+    $conditions = ['userid' => $userid, 'trilhaid' => $trilhaid];
+    $issue = $DB->get_record('local_isgcorp_trilha_cert', $conditions);
     if ($issue) {
         return $issue;
     }
 
-    $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
-    $state = local_isgcorp_get_course_assessment_state($course, $userid);
-    if (!$state['passed']) {
+    if (!local_isgcorp_is_trilha_complete($trilhaid, $userid)) {
         throw new moodle_exception('certificateincomplete', 'local_isgcorp');
     }
 
     do {
         $code = strtoupper(random_string(12));
-    } while ($DB->record_exists('local_isgcorp_certificate', ['code' => $code]));
+    } while ($DB->record_exists('local_isgcorp_trilha_cert', ['code' => $code]));
 
     $issue = (object) $conditions;
     $issue->code = $code;
     $issue->timecreated = time();
-    $issue->id = $DB->insert_record('local_isgcorp_certificate', $issue);
+    $issue->id = $DB->insert_record('local_isgcorp_trilha_cert', $issue);
 
     return $issue;
 }
 
 /**
- * Creates any certificates already earned by a user but not issued yet.
+ * Emite os certificados de trilha ja conquistados pelo usuario e ainda
+ * nao registrados.
+ *
+ * @param int $userid
+ * @return void
  */
 function local_isgcorp_sync_user_certificates(int $userid): void {
     global $DB;
-    $sql = "SELECT DISTINCT q.course FROM {quiz_grades} qg JOIN {quiz} q ON q.id = qg.quiz WHERE qg.userid = :userid AND q.grade > 0 AND (qg.grade / q.grade) >= :passpercentage";
-    $courseids = $DB->get_fieldset_sql($sql, ['userid' => $userid, 'passpercentage' => 0.7]);
-    foreach ($courseids as $courseid) {
-        $assessment = local_isgcorp_get_course_assessment((int)$courseid);
-        if (!$assessment) { continue; }
-        $usergrade = $DB->get_field('quiz_grades', 'grade', ['quiz' => $assessment->id, 'userid' => $userid]);
-        if ($usergrade === false || (float)$assessment->grade <= 0 || ((float)$usergrade / (float)$assessment->grade) < 0.7) { continue; }
-        local_isgcorp_get_or_create_certificate((int)$courseid, $userid);
+
+    foreach (local_isgcorp_get_user_trilhas($userid) as $trilha) {
+        if ($DB->record_exists('local_isgcorp_trilha_cert', ['userid' => $userid, 'trilhaid' => $trilha->id])) {
+            continue;
+        }
+        if (local_isgcorp_is_trilha_complete((int) $trilha->id, $userid)) {
+            local_isgcorp_get_or_create_trilha_certificate((int) $trilha->id, $userid);
+        }
     }
 }
 
@@ -556,7 +683,7 @@ function local_isgcorp_get_trilha_by_courseid(int $courseid): ?\stdClass {
              WHERE tc.courseid = :courseid
           ORDER BY tc.sortorder ASC, t.id ASC";
 
-    return $DB->get_record_sql($sql, ['courseid' => $courseid]) ?: null;
+    return $DB->get_record_sql($sql, ['courseid' => $courseid], IGNORE_MULTIPLE) ?: null;
 }
 
 /**
@@ -893,7 +1020,7 @@ function local_isgcorp_resolve_lesson_name(
 ): string {
     $coursecontext = \context_course::instance($course->id);
     $sectionname = $sectioninfo
-        ? trim(format_string($sectioninfo->name ?? '', true, ['context' => $coursecontext]))
+        ? trim(format_string($sectioninfo->name ?? '', true, ['context' => $coursecontext, 'escape' => false]))
         : '';
     $cmname = trim(local_isgcorp_extract_plain_text((string) $cm->get_formatted_name()));
     $genericname = trim(local_isgcorp_extract_plain_text(local_isgcorp_get_module_display_name($cm->modname)));

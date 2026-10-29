@@ -73,9 +73,14 @@ class core_renderer extends \theme_boost\output\core_renderer {
                     if (empty($node->action)) {
                         continue;
                     }
-                    $url = $node->action instanceof \moodle_url
-                        ? $node->action->out_as_local_url(false)
-                        : (string) $node->action;
+                    try {
+                        $url = $node->action instanceof \moodle_url
+                            ? $node->action->out_as_local_url(false)
+                            : (string) $node->action;
+                    } catch (\coding_exception $e) {
+                        // Link externo: fora da lista de caminhos permitidos.
+                        continue;
+                    }
                     if (in_array(parse_url($url, PHP_URL_PATH), $allowedpaths, true)) {
                         $filterednodes->add($node);
                     }

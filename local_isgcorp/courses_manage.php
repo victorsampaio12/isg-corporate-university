@@ -103,8 +103,8 @@ if (!$courses) {
             ),
         ];
         $status = $course->visible
-            ? html_writer::span(get_string('statusactive', 'local_isgcorp'), 'badge badge-success')
-            : html_writer::span(get_string('statusdraft', 'local_isgcorp'), 'badge badge-secondary');
+            ? html_writer::span(get_string('statusactive', 'local_isgcorp'), 'badge badge-success text-bg-success')
+            : html_writer::span(get_string('statusdraft', 'local_isgcorp'), 'badge badge-secondary text-bg-secondary');
 
         $table->data[] = [
             format_string($course->fullname),

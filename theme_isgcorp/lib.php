@@ -39,6 +39,45 @@ function theme_isgcorp_get_brand_asset_url(string $filearea, string $fallbackpix
 }
 
 /**
+ * Banner de boas-vindas do Inicio, de ponta a ponta logo abaixo da barra
+ * superior. O texto e o botao sao HTML (responsivos); a imagem enviada em
+ * "Banner da pagina inicial" e so o fundo, ja com o vermelho da marca.
+ *
+ * @return string
+ */
+function theme_isgcorp_get_dashboard_hero_html(): string {
+    global $CFG;
+
+    $bannerurl = theme_isgcorp_get_brand_asset_url('homebanner', 'hero-bg');
+    $destination = file_exists($CFG->dirroot . '/local/isgcorp/index.php')
+        ? new moodle_url('/local/isgcorp/index.php')
+        : new moodle_url('/course/index.php');
+
+    // Chapeu de formatura sobre o "ISG" do titulo, em SVG para escalar com a fonte.
+    $cap = '<svg class="isg-dashboard-hero-cap" viewBox="0 0 64 44" aria-hidden="true" focusable="false">'
+        . '<path d="M14 20v9c0 4.4 8 8.5 18 8.5s18-4.1 18-8.5v-9l-18 7z" fill="#e8e6ea"/>'
+        . '<path d="M32 3l30 12-30 12L2 15z" fill="#fff"/>'
+        . '<path d="M32 15l23 4v14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>'
+        . '<path d="M52.5 33h5l1.5 8h-8z" fill="#fff"/>'
+        . '</svg>';
+    $brand = html_writer::tag('span', 'ISG' . $cap, ['class' => 'isg-dashboard-hero-brand']);
+
+    $html = html_writer::start_div('isg-dashboard-hero', ['style' => 'background-image: url("' . $bannerurl->out(false) . '")']);
+    $html .= html_writer::start_div('isg-dashboard-hero-copy');
+    $html .= html_writer::tag('h1', get_string('herotitle', 'theme_isgcorp', $brand), ['class' => 'isg-dashboard-hero-title']);
+    $html .= html_writer::tag('p', get_string('herosubtitle', 'theme_isgcorp'), ['class' => 'isg-dashboard-hero-subtitle']);
+    $html .= html_writer::link(
+        $destination,
+        get_string('herocta', 'theme_isgcorp') . '<span class="isg-dashboard-hero-cta-icon" aria-hidden="true"></span>',
+        ['class' => 'isg-dashboard-hero-cta']
+    );
+    $html .= html_writer::end_div();
+    $html .= html_writer::end_div();
+
+    return $html;
+}
+
+/**
  * Monta o SCSS completo do tema.
  *
  * @param theme_config $theme
@@ -197,7 +236,12 @@ function theme_isgcorp_filter_student_user_menu(array $usermenu): array {
             return false;
         }
 
-        $url = $item->url instanceof \moodle_url ? $item->url->out_as_local_url(false) : (string) $item->url;
+        try {
+            $url = $item->url instanceof \moodle_url ? $item->url->out_as_local_url(false) : (string) $item->url;
+        } catch (\coding_exception $e) {
+            // Link externo adicionado em customusermenuitems: nao entra no menu do aluno.
+            return false;
+        }
         $path = parse_url($url, PHP_URL_PATH);
         return in_array($path, $allowedpaths, true);
     });
@@ -235,16 +279,15 @@ function theme_isgcorp_should_hide_full_header(\moodle_page $page): bool {
 
 /**
  * Esconde a navegacao secundaria do Moodle nas paginas customizadas
- * de curso/aula.
+ * (inicio, trilhas, curso, aula e certificados).
  *
  * @param moodle_page $page
  * @return bool
  */
 function theme_isgcorp_should_hide_secondary_navigation(\moodle_page $page): bool {
-    $currenturl = $page->url ? $page->url->out_as_local_url(false) : '';
-    $path = theme_isgcorp_get_navigation_path($currenturl);
-
-    return in_array($path, ['/local/isgcorp/course.php', '/local/isgcorp/lesson.php'], true);
+    // As paginas com header customizado tambem nao usam as abas nativas;
+    // sem isso, admins viam uma faixa vazia/aba solta no topo de Trilhas.
+    return theme_isgcorp_should_hide_full_header($page);
 }
 
 /**

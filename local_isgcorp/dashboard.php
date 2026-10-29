@@ -3,6 +3,7 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once(__DIR__ . '/lib.php');
 
 admin_externalpage_setup('local_isgcorp_dashboard');
 
@@ -52,8 +53,9 @@ if ($courseids) {
         $inparams + ['quiz' => 'quiz']
     );
 
-    $certificatewhere = "courseid {$insql}";
-    $certificateparams = $inparams;
+    // Certificados sao emitidos por trilha.
+    $certificatewhere = $trailid ? 'trilhaid = :certtrilhaid' : '1 = 1';
+    $certificateparams = $trailid ? ['certtrilhaid' => $trailid] : [];
     if ($fromtimestamp) {
         $certificatewhere .= ' AND timecreated >= :certificatefrom';
         $certificateparams['certificatefrom'] = $fromtimestamp;
@@ -62,7 +64,7 @@ if ($courseids) {
         $certificatewhere .= ' AND timecreated <= :certificateto';
         $certificateparams['certificateto'] = $totimestamp;
     }
-    $certificates = $DB->count_records_select('local_isgcorp_certificate', $certificatewhere, $certificateparams);
+    $certificates = $DB->count_records_select('local_isgcorp_trilha_cert', $certificatewhere, $certificateparams);
 }
 
 $trailcount = $trailid ? 1 : $DB->count_records('local_isgcorp_trilha');
@@ -108,9 +110,8 @@ foreach ($trails as $trail) {
     }
     $trailcertificates = (int)$DB->count_records_sql(
         "SELECT COUNT(cert.id)
-           FROM {local_isgcorp_certificate} cert
-           JOIN {local_isgcorp_trilha_course} tc ON tc.courseid = cert.courseid
-          WHERE tc.trilhaid = :trilhaid {$trailcertificatewhere}",
+           FROM {local_isgcorp_trilha_cert} cert
+          WHERE cert.trilhaid = :trilhaid {$trailcertificatewhere}",
         $trailcertificateparams
     );
     $maxstudents = max($maxstudents, $trailstudents);
@@ -136,11 +137,11 @@ echo html_writer::link(new moodle_url('/local/isgcorp/dashboard.php'), get_strin
 echo '</form>';
 
 $metrics = [
-    [get_string('dashboardstudents', 'local_isgcorp'), $students, '&#128101;'],
-    [get_string('dashboardtrails', 'local_isgcorp'), $trailcount, '&#127891;'],
-    [get_string('dashboardcourses', 'local_isgcorp'), $coursecount, '&#128218;'],
-    [get_string('dashboardlessons', 'local_isgcorp'), $lessons, '&#9654;'],
-    [get_string('dashboardcertificates', 'local_isgcorp'), $certificates, '&#127942;'],
+    [get_string('dashboardstudents', 'local_isgcorp'), $students, local_isgcorp_icon('users')],
+    [get_string('dashboardtrails', 'local_isgcorp'), $trailcount, local_isgcorp_icon('graduation-cap')],
+    [get_string('dashboardcourses', 'local_isgcorp'), $coursecount, local_isgcorp_icon('library')],
+    [get_string('dashboardlessons', 'local_isgcorp'), $lessons, local_isgcorp_icon('play')],
+    [get_string('dashboardcertificates', 'local_isgcorp'), $certificates, local_isgcorp_icon('award')],
 ];
 echo '<div class="isg-dashboard-metrics">';
 foreach ($metrics as [$label, $value, $icon]) {

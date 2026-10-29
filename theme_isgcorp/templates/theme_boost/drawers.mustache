@@ -49,6 +49,7 @@
         {{/ theme_boost/drawer}}
     {{/showblockdrawer}}
     <div id="page" data-region="mainpage" data-usertour="scroller" class="drawers {{#blockdraweropen}}show-drawer-right{{/blockdraweropen}} drag-container">
+        {{{ dashboardhero }}}
         <div id="topofscroll" class="main-inner">
             <div class="drawer-toggles d-flex">
                 {{#showblockdrawer}}
@@ -59,10 +60,12 @@
                             data-action="toggle"
                             data-target="theme_boost-drawers-blocks"
                             data-toggle="tooltip"
+                            data-bs-toggle="tooltip"
                             data-placement="right"
+                            data-bs-placement="right"
                             title="{{#str}}opendrawerblocks, core{{/str}}"
                         >
-                            <span class="sr-only">{{#str}}opendrawerblocks, core{{/str}}</span>
+                            <span class="sr-only visually-hidden">{{#str}}opendrawerblocks, core{{/str}}</span>
                             <span class="dir-rtl-hide">{{#pix}}t/blocks_drawer, core{{/pix}}</span>
                             <span class="dir-ltr-hide">{{#pix}}t/blocks_drawer_rtl, core{{/pix}}</span>
                         </button>

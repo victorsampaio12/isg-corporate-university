@@ -10,7 +10,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 class observer {
     /**
-     * Issues the course certificate immediately after a passing quiz attempt.
+     * Issues any learning-path certificate earned after a passing quiz attempt.
      */
     public static function quiz_attempt_submitted(\mod_quiz\event\attempt_submitted $event): void {
         global $CFG, $DB;
@@ -27,7 +27,7 @@ class observer {
         }
 
         try {
-            local_isgcorp_get_or_create_certificate((int)$event->courseid, (int)$attempt->userid);
+            local_isgcorp_sync_user_certificates((int)$attempt->userid);
         } catch (\moodle_exception $exception) {
             if ($exception->errorcode !== 'certificateincomplete') {
                 debugging($exception->getMessage(), DEBUG_DEVELOPER);

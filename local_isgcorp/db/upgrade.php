@@ -121,39 +121,8 @@ function xmldb_local_isgcorp_upgrade($oldversion) {
             $dbman->create_table($table);
         }
 
-        $handler = \core_course\customfield\course_handler::create();
-        $hoursfield = $DB->get_record('customfield_field', [
-            'shortname' => 'isg_cargahoraria',
-        ]);
-        if (!$hoursfield) {
-            $categoryrecord = (object) [
-                'name' => 'Universidade Corporativa ISG',
-                'component' => $handler->get_component(),
-                'area' => $handler->get_area(),
-                'itemid' => $handler->get_itemid(),
-                'contextid' => $handler->get_configuration_context()->id,
-                'sortorder' => 0,
-                'timecreated' => time(),
-                'timemodified' => time(),
-            ];
-            $category = \core_customfield\category_controller::create(0, $categoryrecord, $handler);
-            $category->save();
-
-            $fieldrecord = (object) [
-                'categoryid' => $category->get('id'),
-                'type' => 'text',
-                'name' => 'Carga horaria (horas)',
-                'shortname' => 'isg_cargahoraria',
-                'description' => 'Carga horaria usada na soma do certificado da trilha.',
-                'descriptionformat' => FORMAT_PLAIN,
-                'sortorder' => 0,
-                'configdata' => json_encode(['defaultvalue' => '', 'displaysize' => 10, 'maxlength' => 10]),
-                'timecreated' => time(),
-                'timemodified' => time(),
-            ];
-            $field = \core_customfield\field_controller::create(0, $fieldrecord, $category);
-            $field->save();
-        }
+        require_once($CFG->dirroot . '/local/isgcorp/lib.php');
+        local_isgcorp_ensure_workload_field();
 
         upgrade_plugin_savepoint(true, 2026100201, 'local', 'isgcorp');
     }
@@ -230,6 +199,26 @@ function xmldb_local_isgcorp_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026101503, 'local', 'isgcorp');
     }
 
+    if ($oldversion < 2026102200) {
+        // O certificado passa a ser emitido por trilha, ao concluir todos os modulos.
+        $table = new xmldb_table('local_isgcorp_trilha_cert');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('trilhaid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('code', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_key('trilhaid', XMLDB_KEY_FOREIGN, ['trilhaid'], 'local_isgcorp_trilha', ['id']);
+        $table->add_key('user_trilha', XMLDB_KEY_UNIQUE, ['userid', 'trilhaid']);
+        $table->add_index('code', XMLDB_INDEX_UNIQUE, ['code']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026102200, 'local', 'isgcorp');
+    }
+
     if ($oldversion < 2026102901) {
         $table = new xmldb_table('local_isgcorp_certname_log');
         if ($dbman->table_exists($table)) {
@@ -247,6 +236,51 @@ function xmldb_local_isgcorp_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2026102901, 'local', 'isgcorp');
+    }
+
+    if ($oldversion < 2026102902) {
+        // Some installations reached 2026102901 before the learning-path
+        // certificate migration from main was merged. Ensure the table exists.
+        $table = new xmldb_table('local_isgcorp_trilha_cert');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('trilhaid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('code', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_key('trilhaid', XMLDB_KEY_FOREIGN, ['trilhaid'], 'local_isgcorp_trilha', ['id']);
+        $table->add_key('user_trilha', XMLDB_KEY_UNIQUE, ['userid', 'trilhaid']);
+        $table->add_index('code', XMLDB_INDEX_UNIQUE, ['code']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Honour certificates granted under the former per-course rule.
+        foreach ($DB->get_records('local_isgcorp_certificate', null, 'timecreated ASC, id ASC') as $legacyissue) {
+            $trailrelations = $DB->get_records('local_isgcorp_trilha_course', [
+                'courseid' => (int)$legacyissue->courseid,
+            ]);
+            foreach ($trailrelations as $trailrelation) {
+                $conditions = [
+                    'userid' => (int)$legacyissue->userid,
+                    'trilhaid' => (int)$trailrelation->trilhaid,
+                ];
+                if ($DB->record_exists('local_isgcorp_trilha_cert', $conditions)) {
+                    continue;
+                }
+                $code = (string)$legacyissue->code;
+                while ($DB->record_exists('local_isgcorp_trilha_cert', ['code' => $code])) {
+                    $code = strtoupper(random_string(12));
+                }
+                $DB->insert_record('local_isgcorp_trilha_cert', (object)($conditions + [
+                    'code' => $code,
+                    'timecreated' => (int)$legacyissue->timecreated,
+                ]));
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026102902, 'local', 'isgcorp');
     }
 
     return true;

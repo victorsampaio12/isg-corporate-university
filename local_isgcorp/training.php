@@ -3,12 +3,13 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once(__DIR__ . '/lib.php');
 
 admin_externalpage_setup('local_isgcorp_training');
 
 $cards = [
     [
-        'icon' => '&#127891;',
+        'icon' => local_isgcorp_icon('graduation-cap'),
         'title' => get_string('trainingtrails', 'local_isgcorp'),
         'description' => get_string('trainingtrailsdesc', 'local_isgcorp'),
         'actions' => [
@@ -17,7 +18,7 @@ $cards = [
         ],
     ],
     [
-        'icon' => '&#128218;',
+        'icon' => local_isgcorp_icon('library'),
         'title' => get_string('trainingcourses', 'local_isgcorp'),
         'description' => get_string('trainingcoursesdesc', 'local_isgcorp'),
         'actions' => [
@@ -26,7 +27,7 @@ $cards = [
         ],
     ],
     [
-        'icon' => '&#9989;',
+        'icon' => local_isgcorp_icon('check-circle'),
         'title' => get_string('assessmentsadmin', 'local_isgcorp'),
         'description' => get_string('assessmentadmindesc', 'local_isgcorp'),
         'actions' => [

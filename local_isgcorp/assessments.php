@@ -28,8 +28,8 @@ foreach ($courses as $course) {
     if ($assessment) {
         $questioncount = $DB->count_records('quiz_slots', ['quizid' => $assessment->id]);
         $status = $questioncount > 0
-            ? html_writer::span(get_string('assessmentready', 'local_isgcorp'), 'badge badge-success')
-            : html_writer::span(get_string('assessmentincompleteconfig', 'local_isgcorp'), 'badge badge-warning');
+            ? html_writer::span(get_string('assessmentready', 'local_isgcorp'), 'badge badge-success text-bg-success')
+            : html_writer::span(get_string('assessmentincompleteconfig', 'local_isgcorp'), 'badge badge-warning text-bg-warning');
         $actions[] = html_writer::link(
             new moodle_url('/mod/quiz/edit.php', ['cmid' => $assessment->cmid]),
             get_string('assessmenteditquestions', 'local_isgcorp')
@@ -47,7 +47,7 @@ foreach ($courses as $course) {
         $assessmentname = format_string($assessment->name);
     } else {
         $questioncount = 0;
-        $status = html_writer::span(get_string('assessmentnone', 'local_isgcorp'), 'badge badge-secondary');
+        $status = html_writer::span(get_string('assessmentnone', 'local_isgcorp'), 'badge badge-secondary text-bg-secondary');
         $actions[] = html_writer::link(
             new moodle_url('/local/isgcorp/assessment_create.php', ['courseid' => $course->id]),
             get_string('createassessment', 'local_isgcorp')

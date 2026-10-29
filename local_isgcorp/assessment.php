@@ -31,7 +31,8 @@ if (!$state['lessonscomplete']) {
     redirect($backurl, get_string('assessmentlocked', 'local_isgcorp'), null, \core\output\notification::NOTIFY_WARNING);
 }
 if ($state['passed']) {
-    redirect(new moodle_url('/local/isgcorp/certificate.php', ['courseid' => $courseid]));
+    // A pagina do modulo leva ao proximo modulo ou ao certificado da trilha.
+    redirect($backurl);
 }
 if ($state['attemptsremaining'] <= 0) {
     redirect($backurl, get_string('assessmentattemptsexhausted', 'local_isgcorp'), null, \core\output\notification::NOTIFY_ERROR);

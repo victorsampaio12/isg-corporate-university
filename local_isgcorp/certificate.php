@@ -7,12 +7,18 @@ require_once($CFG->libdir . '/pdflib.php');
 
 require_login();
 
-$courseid = required_param('courseid', PARAM_INT);
-$course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
-require_login($course);
+$trilhaid = optional_param('trilhaid', 0, PARAM_INT);
+// Links antigos apontavam para o curso; resolve a trilha que o contem.
+$courseid = optional_param('courseid', 0, PARAM_INT);
+if (!$trilhaid && $courseid && ($coursetrilha = local_isgcorp_get_trilha_by_courseid($courseid))) {
+    $trilhaid = (int) $coursetrilha->id;
+}
+$trilha = $DB->get_record('local_isgcorp_trilha', ['id' => $trilhaid], '*', MUST_EXIST);
+$PAGE->set_context(context_system::instance());
+$PAGE->set_url(new moodle_url('/local/isgcorp/certificate.php', ['trilhaid' => $trilhaid]));
 
-$issue = local_isgcorp_get_or_create_certificate($courseid, (int)$USER->id);
-$hours = local_isgcorp_get_course_hours($courseid);
+$issue = local_isgcorp_get_or_create_trilha_certificate($trilhaid, (int)$USER->id);
+$hours = local_isgcorp_get_trilha_course_hours($trilhaid);
 $hourslabel = rtrim(rtrim(number_format($hours, 1, ',', ''), '0'), ',') . 'h';
 $date = userdate($issue->timecreated, '%d de %B de %Y');
 $certificatename = local_isgcorp_get_certificate_name((int)$USER->id);
@@ -54,7 +60,7 @@ $statement = get_string('certificateintro', 'local_isgcorp') . ' <strong>' . s($
 $pdf->writeHTMLCell(142, 12, '', '', $statement, 0, 1, false, true, 'L', true);
 $pdf->SetFont('helvetica', 'B', 27);
 $pdf->SetXY(45, 80);
-$pdf->MultiCell(142, 14, format_string($course->fullname), 0, 'L', false, 1);
+$pdf->MultiCell(142, 14, format_string($trilha->name), 0, 'L', false, 1);
 
 $pdf->SetFont('helvetica', '', 19);
 $pdf->SetXY(45, 103);
@@ -74,6 +80,6 @@ $pdf->SetFont('helvetica', '', 7);
 $pdf->SetXY(185, 166);
 $pdf->Cell(48, 5, 'Codigo: ' . $issue->code, 0, 0, 'R');
 
-$filename = clean_filename('Certificado - ' . format_string($course->fullname) . '.pdf');
+$filename = clean_filename('Certificado - ' . format_string($trilha->name) . '.pdf');
 $pdf->Output($filename, 'D');
 exit;

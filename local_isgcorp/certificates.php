@@ -14,8 +14,6 @@ require_once(__DIR__ . '/lib.php');
 
 require_login();
 
-local_isgcorp_sync_user_certificates((int)$USER->id);
-
 $page = optional_param('page', 0, PARAM_INT);
 $perpage = 8;
 $context = context_system::instance();
@@ -25,9 +23,12 @@ $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('mycertificates', 'local_isgcorp'));
 
-$sql = "SELECT ci.id, ci.timecreated, ci.code, c.id AS courseid, c.fullname AS certname
-          FROM {local_isgcorp_certificate} ci
-          JOIN {course} c ON c.id = ci.courseid
+// Depois do set_context: a emissao formata o conteudo das aulas.
+local_isgcorp_sync_user_certificates((int)$USER->id);
+
+$sql = "SELECT ci.id, ci.timecreated, ci.code, t.id AS trilhaid, t.name AS certname
+          FROM {local_isgcorp_trilha_cert} ci
+          JOIN {local_isgcorp_trilha} t ON t.id = ci.trilhaid
          WHERE ci.userid = :userid
       ORDER BY ci.timecreated DESC";
 $allcerts = $DB->get_records_sql($sql, ['userid' => $USER->id]);
@@ -51,9 +52,9 @@ echo '</div>';
 
 echo '<div class="isg-stat-grid mb-4">';
 $stats = [
-    ['&#127942;', $totalcount, get_string('certcount', 'local_isgcorp')],
-    ['&#128200;', $advancedcount, get_string('certadvanced', 'local_isgcorp')],
-    ['&#128197;', $lastyear ?? '&mdash;', get_string('certlast', 'local_isgcorp')],
+    [local_isgcorp_icon('award'), $totalcount, get_string('certcount', 'local_isgcorp')],
+    [local_isgcorp_icon('trending-up'), $advancedcount, get_string('certadvanced', 'local_isgcorp')],
+    [local_isgcorp_icon('calendar'), $lastyear ?? '&mdash;', get_string('certlast', 'local_isgcorp')],
 ];
 foreach ($stats as [$icon, $value, $label]) {
     echo '<div class="isg-stat-card"><div class="isg-stat-icon">' . $icon . '</div><div>';
@@ -69,13 +70,13 @@ if (!$allcerts) {
     $pagedcerts = array_slice(array_values($allcerts), $page * $perpage, $perpage);
     echo '<div class="isg-cert-grid">';
     foreach ($pagedcerts as $certificate) {
-        $downloadurl = new moodle_url('/local/isgcorp/certificate.php', ['courseid' => $certificate->courseid]);
+        $downloadurl = new moodle_url('/local/isgcorp/certificate.php', ['trilhaid' => $certificate->trilhaid]);
         $date = userdate($certificate->timecreated, get_string('certdateformat', 'local_isgcorp'));
 
         echo '<div class="isg-cert-card">';
         echo '<div class="isg-cert-top"><span class="isg-cert-label">';
         echo get_string('certificatelabel', 'local_isgcorp');
-        echo '</span><span class="isg-cert-badge">&#127942;</span></div>';
+        echo '</span><span class="isg-cert-badge">' . local_isgcorp_icon('award') . '</span></div>';
         echo '<div class="isg-cert-title">' . format_string($certificate->certname) . '</div>';
         echo '<div class="isg-cert-date">' . get_string('completedon', 'local_isgcorp', $date) . '</div>';
         $downloadlabel = get_string('download', 'local_isgcorp');

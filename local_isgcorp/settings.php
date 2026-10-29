@@ -63,17 +63,17 @@ if ($hassiteconfig) {
         'local/isgcorp:manage'
     ));
 
+    $ADMIN->add('local_isgcorp_training_category', new admin_category(
+        'local_isgcorp_training_management',
+        get_string('trainingmanagement', 'local_isgcorp')
+    ));
+
     $ADMIN->add('local_isgcorp_training_category', new admin_externalpage(
         'local_isgcorp_dashboard',
         get_string('admindashboard', 'local_isgcorp'),
         new moodle_url('/local/isgcorp/dashboard.php'),
         'local/isgcorp:manage'
     ), 'local_isgcorp_training_management');
-
-    $ADMIN->add('local_isgcorp_training_category', new admin_category(
-        'local_isgcorp_training_management',
-        get_string('trainingmanagement', 'local_isgcorp')
-    ));
 
     $ADMIN->add('local_isgcorp_training_management', new admin_externalpage(
         'local_isgcorp_manage',
