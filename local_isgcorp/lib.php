@@ -21,33 +21,10 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/completionlib.php');
 
 /**
- * Ensures the optional certificate display name exists in user profiles.
- */
-function local_isgcorp_ensure_certificate_profile_field(): void {
-    global $DB;
-    if ($DB->record_exists('user_info_field', ['shortname' => 'isg_certificatename'])) { return; }
-    $category = $DB->get_record('user_info_category', ['name' => get_string('profilecategory', 'local_isgcorp')]);
-    if (!$category) {
-        $category = (object) ['name' => get_string('profilecategory', 'local_isgcorp'), 'sortorder' => (int)$DB->get_field_sql('SELECT COALESCE(MAX(sortorder), 0) + 1 FROM {user_info_category}')];
-        $category->id = $DB->insert_record('user_info_category', $category);
-    }
-    $DB->insert_record('user_info_field', (object) [
-        'shortname' => 'isg_certificatename', 'name' => get_string('certificatenamefield', 'local_isgcorp'), 'datatype' => 'text',
-        'description' => get_string('certificatenamefielddesc', 'local_isgcorp'), 'descriptionformat' => FORMAT_PLAIN,
-        'categoryid' => $category->id, 'sortorder' => 0, 'required' => 0, 'locked' => 0, 'visible' => 2,
-        'forceunique' => 0, 'signup' => 0, 'defaultdata' => '', 'defaultdataformat' => FORMAT_PLAIN,
-        'param1' => '50', 'param2' => '255', 'param3' => '0', 'param4' => '', 'param5' => '',
-    ]);
-}
-
-/**
- * Returns the preferred certificate name, falling back to the Moodle full name.
+ * Returns the Moodle full name used on certificates.
  */
 function local_isgcorp_get_certificate_name(int $userid): string {
     global $DB;
-    $sql = "SELECT uid.data FROM {user_info_data} uid JOIN {user_info_field} uif ON uif.id = uid.fieldid WHERE uid.userid = :userid AND uif.shortname = :shortname";
-    $preferredname = trim((string)$DB->get_field_sql($sql, ['userid' => $userid, 'shortname' => 'isg_certificatename']));
-    if ($preferredname !== '') { return $preferredname; }
     $user = $DB->get_record('user', ['id' => $userid], 'id,firstname,lastname,firstnamephonetic,lastnamephonetic,middlename,alternatename', MUST_EXIST);
     return fullname($user);
 }
@@ -390,16 +367,16 @@ function local_isgcorp_create_course_assessment(int $courseid, string $name): \s
 function local_isgcorp_get_or_create_certificate(int $courseid, int $userid): \stdClass {
     global $DB;
 
-    $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
-    $state = local_isgcorp_get_course_assessment_state($course, $userid);
-    if (!$state['passed']) {
-        throw new moodle_exception('certificateincomplete', 'local_isgcorp');
-    }
-
     $conditions = ['userid' => $userid, 'courseid' => $courseid];
     $issue = $DB->get_record('local_isgcorp_certificate', $conditions);
     if ($issue) {
         return $issue;
+    }
+
+    $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+    $state = local_isgcorp_get_course_assessment_state($course, $userid);
+    if (!$state['passed']) {
+        throw new moodle_exception('certificateincomplete', 'local_isgcorp');
     }
 
     do {

@@ -181,9 +181,6 @@ function xmldb_local_isgcorp_upgrade($oldversion) {
     }
 
     if ($oldversion < 2026100902) {
-        require_once($CFG->dirroot . '/local/isgcorp/lib.php');
-        local_isgcorp_ensure_certificate_profile_field();
-
         upgrade_plugin_savepoint(true, 2026100902, 'local', 'isgcorp');
     }
 
@@ -231,6 +228,25 @@ function xmldb_local_isgcorp_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2026101503, 'local', 'isgcorp');
+    }
+
+    if ($oldversion < 2026102901) {
+        $table = new xmldb_table('local_isgcorp_certname_log');
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+
+        $profilefield = $DB->get_record('user_info_field', ['shortname' => 'isg_certificatename']);
+        if ($profilefield) {
+            require_once($CFG->dirroot . '/user/profile/definelib.php');
+            $categoryid = (int)$profilefield->categoryid;
+            profile_delete_field((int)$profilefield->id);
+            if (!$DB->record_exists('user_info_field', ['categoryid' => $categoryid])) {
+                profile_delete_category($categoryid);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026102901, 'local', 'isgcorp');
     }
 
     return true;

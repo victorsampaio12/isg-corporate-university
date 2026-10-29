@@ -122,11 +122,6 @@ echo $OUTPUT->header();
 echo '<div class="isg-dashboard">';
 echo '<div class="isg-admin-page-head"><div><h2>' . get_string('dashboardtitle', 'local_isgcorp') . '</h2>';
 echo '<p>' . get_string('dashboardsubtitle', 'local_isgcorp') . '</p></div>';
-echo html_writer::link(
-    new moodle_url('/local/isgcorp/certificate_audit.php'),
-    get_string('opencertificateaudit', 'local_isgcorp'),
-    ['class' => 'btn btn-outline-primary']
-);
 echo '</div>';
 echo '<form method="get" class="isg-dashboard-filters">';
 echo '<label>' . get_string('dashboardperiodfrom', 'local_isgcorp') . '<input class="form-control" type="date" name="datefrom" value="' . s($datefrom) . '"></label>';

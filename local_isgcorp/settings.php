@@ -70,13 +70,6 @@ if ($hassiteconfig) {
         'local/isgcorp:manage'
     ), 'local_isgcorp_training_management');
 
-    $ADMIN->add('local_isgcorp_training_category', new admin_externalpage(
-        'local_isgcorp_certificate_audit',
-        get_string('certificateaudit', 'local_isgcorp'),
-        new moodle_url('/local/isgcorp/certificate_audit.php'),
-        'local/isgcorp:manage'
-    ), 'local_isgcorp_training_management');
-
     $ADMIN->add('local_isgcorp_training_category', new admin_category(
         'local_isgcorp_training_management',
         get_string('trainingmanagement', 'local_isgcorp')
