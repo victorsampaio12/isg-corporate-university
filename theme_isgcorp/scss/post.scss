@@ -3510,42 +3510,6 @@ $isg-login-stripes-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.or
     background: linear-gradient(90deg, #8d0007, #d22128);
 }
 
-.isg-certificate-audit .isg-audit-search {
-    flex: 1 1 320px;
-}
-
-.isg-audit-table-wrap {
-    overflow: hidden;
-    border: 1px solid #eadede;
-    border-radius: 18px;
-    background: #fff;
-    box-shadow: 0 14px 35px rgba(61, 18, 18, .06);
-}
-
-.isg-audit-table {
-    margin: 0;
-}
-
-.isg-audit-table thead th {
-    border-top: 0;
-    background: #fff8f7;
-    color: #3d3034;
-    white-space: nowrap;
-}
-
-.isg-audit-user {
-    display: grid;
-    gap: 2px;
-
-    small {
-        color: #777079;
-    }
-}
-
-.isg-certificate-audit .pagination {
-    margin-top: 20px;
-}
-
 @media (max-width: 991.98px) {
     .isg-dashboard-metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
