@@ -9,6 +9,10 @@ $observers = [
         'callback' => '\\local_isgcorp\\observer::quiz_attempt_submitted',
     ],
     [
+        'eventname' => '\\mod_quiz\\event\\attempt_graded',
+        'callback' => '\\local_isgcorp\\observer::quiz_attempt_submitted',
+    ],
+    [
         'eventname' => '\\core\\event\\user_created',
         'callback' => '\\local_isgcorp\\observer::user_created',
     ],

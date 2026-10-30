@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026103000;
+$plugin->version   = 2026103001;
 $plugin->requires  = 2024042200;
 $plugin->component = 'local_isgcorp';
 $plugin->maturity  = MATURITY_ALPHA;

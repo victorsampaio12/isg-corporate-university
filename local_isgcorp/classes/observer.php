@@ -26,8 +26,11 @@ class observer {
 
     /**
      * Issues any learning-path certificate earned after a passing quiz attempt.
+     *
+     * Ouve attempt_submitted e attempt_graded: no Moodle 5.x a nota so e gravada
+     * depois do envio (attempt_graded); no 4.5 ela ja existe no attempt_submitted.
      */
-    public static function quiz_attempt_submitted(\mod_quiz\event\attempt_submitted $event): void {
+    public static function quiz_attempt_submitted(\core\event\base $event): void {
         global $CFG, $DB;
 
         require_once($CFG->dirroot . '/local/isgcorp/lib.php');
