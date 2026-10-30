@@ -64,7 +64,7 @@ $pdf->MultiCell(142, 14, format_string($trilha->name), 0, 'L', false, 1);
 
 $pdf->SetFont('helvetica', '', 19);
 $pdf->SetXY(45, 103);
-$pdf->Cell(48, 10, 'Concluido em', 0, 0, 'L');
+$pdf->Cell(48, 10, 'Concluído em', 0, 0, 'L');
 $pdf->SetTextColor(170, 0, 0);
 $pdf->SetFont('helvetica', 'B', 19);
 $pdf->SetXY(93, 103);
@@ -78,7 +78,7 @@ $pdf->Cell(30, 10, $hourslabel, 0, 0, 'L');
 $pdf->SetTextColor(90, 90, 90);
 $pdf->SetFont('helvetica', '', 7);
 $pdf->SetXY(185, 166);
-$pdf->Cell(48, 5, 'Codigo: ' . $issue->code, 0, 0, 'R');
+$pdf->Cell(48, 5, 'Código: ' . $issue->code, 0, 0, 'R');
 
 $filename = clean_filename('Certificado - ' . format_string($trilha->name) . '.pdf');
 $pdf->Output($filename, 'D');
