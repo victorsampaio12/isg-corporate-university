@@ -102,6 +102,8 @@ if ($mform->is_cancelled()) {
         $link->sortorder = $sort++;
         $DB->insert_record('local_isgcorp_trilha_course', $link);
     }
+    // Curso novo na trilha ja recebe os colaboradores.
+    local_isgcorp_sync_trilha_cohort_enrolments();
 
     redirect(
         new moodle_url('/local/isgcorp/manage.php'),

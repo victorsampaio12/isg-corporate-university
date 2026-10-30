@@ -12,4 +12,8 @@ $observers = [
         'eventname' => '\\core\\event\\user_updated',
         'callback' => '\\local_isgcorp\\observer::user_updated',
     ],
+    [
+        'eventname' => '\\core\\event\\user_created',
+        'callback' => '\\local_isgcorp\\observer::user_created',
+    ],
 ];

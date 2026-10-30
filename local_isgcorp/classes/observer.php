@@ -54,6 +54,21 @@ class observer {
     }
 
     /**
+     * Novo usuario (SSO, LDAP ou cadastro manual) entra na coorte dos colaboradores
+     * e, com ela, nos cursos das trilhas.
+     */
+    public static function user_created(\core\event\user_created $event): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/isgcorp/lib.php');
+        try {
+            local_isgcorp_add_to_collaborators_cohort((int) $event->objectid);
+        } catch (\Throwable $exception) {
+            // Nunca impedir o cadastro/login por causa da inscricao.
+            debugging($exception->getMessage(), DEBUG_DEVELOPER);
+        }
+    }
+
+    /**
      * Issues the course certificate immediately after a passing quiz attempt.
      */
     public static function quiz_attempt_submitted(\mod_quiz\event\attempt_submitted $event): void {

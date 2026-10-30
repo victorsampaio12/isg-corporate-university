@@ -604,6 +604,98 @@ function local_isgcorp_user_can_access_trilha(int $trilhaid, int $userid): bool 
     return isset(local_isgcorp_get_user_trilhas($userid, true)[$trilhaid]);
 }
 
+/** idnumber da coorte com todos os colaboradores, inscrita nos cursos das trilhas. */
+const LOCAL_ISGCORP_COHORT_IDNUMBER = 'isg_colaboradores';
+
+/**
+ * Coorte "Colaboradores ISG" (contexto de sistema).
+ *
+ * @param bool $create Cria a coorte se ainda nao existir.
+ * @return \stdClass|null
+ */
+function local_isgcorp_get_collaborators_cohort(bool $create = false): ?\stdClass {
+    global $CFG, $DB;
+
+    $cohort = $DB->get_record('cohort', ['idnumber' => LOCAL_ISGCORP_COHORT_IDNUMBER]);
+    if ($cohort || !$create) {
+        return $cohort ?: null;
+    }
+
+    require_once($CFG->dirroot . '/cohort/lib.php');
+    $cohort = (object) [
+        'contextid' => \context_system::instance()->id,
+        'name' => 'Colaboradores ISG',
+        'idnumber' => LOCAL_ISGCORP_COHORT_IDNUMBER,
+        'description' => 'Todos os colaboradores. Quem esta nesta coorte e inscrito nos cursos das trilhas.',
+        'descriptionformat' => FORMAT_HTML,
+        'visible' => 1,
+        'component' => '',
+    ];
+    $cohort->id = cohort_add_cohort($cohort);
+
+    return $cohort;
+}
+
+/**
+ * Coloca o usuario na coorte dos colaboradores (ignora visitante, excluidos e administradores).
+ *
+ * @param int $userid
+ * @return bool true se o usuario foi adicionado agora.
+ */
+function local_isgcorp_add_to_collaborators_cohort(int $userid): bool {
+    global $CFG, $DB;
+
+    $cohort = local_isgcorp_get_collaborators_cohort();
+    $user = $DB->get_record('user', ['id' => $userid], 'id, deleted');
+    if (!$cohort || !$user || $user->deleted || isguestuser($userid) || is_siteadmin($userid)) {
+        return false;
+    }
+    if ($DB->record_exists('cohort_members', ['cohortid' => $cohort->id, 'userid' => $userid])) {
+        return false;
+    }
+
+    require_once($CFG->dirroot . '/cohort/lib.php');
+    cohort_add_member($cohort->id, $userid);
+
+    return true;
+}
+
+/**
+ * Garante que cada curso das trilhas tem a sincronizacao com a coorte dos
+ * colaboradores (papel Estudante). Os membros da coorte sao inscritos na hora.
+ *
+ * @return int[] ids dos cursos que ganharam o metodo agora.
+ */
+function local_isgcorp_sync_trilha_cohort_enrolments(): array {
+    global $DB;
+
+    $cohort = local_isgcorp_get_collaborators_cohort();
+    $plugin = enrol_get_plugin('cohort');
+    $studentroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'student']);
+    if (!$cohort || !$plugin || !$studentroleid || !enrol_is_enabled('cohort')) {
+        return [];
+    }
+
+    $added = [];
+    $courseids = $DB->get_fieldset_sql('SELECT DISTINCT courseid FROM {local_isgcorp_trilha_course}');
+    foreach ($courseids as $courseid) {
+        $course = $DB->get_record('course', ['id' => $courseid]);
+        if (!$course || $DB->record_exists('enrol', ['courseid' => $courseid, 'enrol' => 'cohort',
+                'customint1' => $cohort->id])) {
+            continue;
+        }
+        $plugin->add_instance($course, [
+            'customint1' => $cohort->id,
+            'roleid' => $studentroleid,
+            'customint2' => 0,
+            'status' => ENROL_INSTANCE_ENABLED,
+        ]);
+        $added[] = (int) $courseid;
+    }
+
+    return $added;
+}
+
 /**
  * URL da imagem de capa de uma trilha, se houver uma cadastrada.
  *
