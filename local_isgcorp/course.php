@@ -214,9 +214,52 @@ if (!$hasassessment) {
     $assessmentstatus = get_string('assessmentavailable', 'local_isgcorp', $assessmentstate['attemptsremaining']);
 }
 if ($assessmentstatus !== null) {
-    echo '<div class="isg-module-info-box ' . $assessmentclass . '">';
-    echo '<strong>' . get_string('courseassessment', 'local_isgcorp') . '</strong>';
-    echo '<p>' . s($assessmentstatus) . '</p>';
+    $assessmentstatusclass = 'is-neutral';
+    $assessmentstatuslabel = get_string('assessmentnavunavailable', 'local_isgcorp');
+    $assessmentactionurl = null;
+    $assessmentactionlabel = '';
+
+    if (!$lessonscomplete) {
+        $assessmentstatuslabel = get_string('assessmentnavlocked', 'local_isgcorp');
+    } else if ($coursecompleted) {
+        $assessmentstatusclass = 'is-complete';
+        $assessmentstatuslabel = get_string('assessmentnavpassed', 'local_isgcorp');
+        $assessmentactionurl = new moodle_url('/mod/quiz/view.php', ['id' => $assessmentstate['quiz']->cmid]);
+        $assessmentactionlabel = get_string('assessmentviewresult', 'local_isgcorp');
+    } else if ($assessmentstate['configured'] && $assessmentstate['attemptsremaining'] > 0) {
+        $assessmentstatusclass = 'is-progress';
+        $assessmentstatuslabel = get_string('assessmentnavavailable', 'local_isgcorp');
+        $assessmentactionurl = new moodle_url('/local/isgcorp/assessment.php', [
+            'courseid' => $course->id,
+            'trilhaid' => $trilhaid,
+        ]);
+        $assessmentactionlabel = get_string('startassessment', 'local_isgcorp');
+    } else if ($assessmentstate['configured'] && $assessmentstate['attemptsremaining'] <= 0) {
+        $assessmentactionurl = new moodle_url('/mod/quiz/view.php', ['id' => $assessmentstate['quiz']->cmid]);
+        $assessmentactionlabel = get_string('assessmentviewresult', 'local_isgcorp');
+    }
+
+    echo '<div class="isg-module-lesson-list isg-module-assessment-list">';
+    echo '<article class="isg-module-lesson-card isg-module-assessment-card ' . $assessmentclass . '">';
+    echo     '<div class="isg-module-lesson-index">' . ($totallessons + 1) . '</div>';
+    echo     '<div class="isg-module-lesson-media">';
+    echo         '<span class="isg-module-lesson-type">' . s(get_string('courseassessmentlabel', 'local_isgcorp')) . '</span>';
+    echo     '</div>';
+    echo     '<div class="isg-module-lesson-copy">';
+    echo         '<h3 class="isg-module-lesson-title">' . format_string($assessmentstate['quiz']->name) . '</h3>';
+    echo         '<div class="isg-module-lesson-meta">';
+    echo             '<span>' . get_string('assessmentquestionmeta', 'local_isgcorp', $assessmentstate['questioncount']) . '</span>';
+    echo             '<span>' . get_string('assessmentattemptsmeta', 'local_isgcorp', $assessmentstate['attemptsremaining']) . '</span>';
+    echo         '</div>';
+    echo         '<p class="isg-module-lesson-summary">' . s($assessmentstatus) . '</p>';
+    echo     '</div>';
+    echo     '<div class="isg-module-lesson-actions">';
+    echo         '<span class="isg-status-pill ' . $assessmentstatusclass . '">' . s($assessmentstatuslabel) . '</span>';
+    if ($assessmentactionurl) {
+        echo     '<a class="isg-module-inline-btn" href="' . $assessmentactionurl->out() . '">' . s($assessmentactionlabel) . ' &rarr;</a>';
+    }
+    echo     '</div>';
+    echo '</article>';
     echo '</div>';
 }
 

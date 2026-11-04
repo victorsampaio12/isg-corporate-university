@@ -26,6 +26,22 @@ defined('MOODLE_INTERNAL') || die();
 class core_renderer extends \theme_boost\output\core_renderer {
 
     /**
+     * Uses the PNG favicon shipped with the ISG theme.
+     *
+     * Moodle otherwise looks specifically for pix/favicon.ico. An uploaded
+     * favicon from the site settings continues to take precedence.
+     *
+     * @return \moodle_url
+     */
+    public function favicon() {
+        if (!empty(get_config('core_admin', 'favicon'))) {
+            return parent::favicon();
+        }
+
+        return $this->image_url('favicon', 'theme_isgcorp');
+    }
+
+    /**
      * Alunos nao usam notificacoes nem mensagens na experiencia corporativa.
      *
      * @return string

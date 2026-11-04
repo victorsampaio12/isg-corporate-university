@@ -40,6 +40,7 @@ body {
         background: linear-gradient(180deg, $isg-red-800, $isg-red-900);
         z-index: 1030; // acima do conteúdo, abaixo de modais do Moodle (>1040).
             overflow-y: auto;
+            overflow-x: hidden;
         }
 
     // Empurra todo o conteúdo da página pra direita, abrindo
@@ -780,6 +781,21 @@ body.isg-learner.path-mod-quiz {
         .formulation { min-height: 100%; margin: 0; padding: 26px 28px; border: 1px solid #eee2de; border-radius: 20px; background: #fff; box-shadow: 0 14px 34px rgba(37, 27, 29, .05); }
         .qtext { margin-bottom: 22px; color: #221b29; font-size: 17px; font-weight: 750; }
         .answer > div { margin: 8px 0; padding: 12px 14px; border: 1px solid #eee5e1; border-radius: 12px; background: #fffaf9; }
+        &.incorrect {
+            .info { border-color: #e5a4a4; background: #fff3f3; }
+            .formulation { border-color: #d96b6b; border-left-width: 5px; background: #fff8f8; box-shadow: 0 14px 34px rgba(139, 0, 0, .10); }
+            .answer > div.incorrect { border-color: #d96b6b; background: #fdeaea; color: #721c24; }
+        }
+        &.correct {
+            .info { border-color: #9bc9ae; background: #f1faf4; }
+            .formulation { border-color: #4f9b6e; border-left-width: 5px; background: #f7fcf8; box-shadow: 0 14px 34px rgba(30, 112, 65, .09); }
+            .answer > div.correct { border-color: #4f9b6e; background: #e9f7ee; color: #185c34; }
+        }
+        &.partiallycorrect {
+            .info { border-color: #dfbd65; background: #fff9e8; }
+            .formulation { border-color: #c69522; border-left-width: 5px; background: #fffdf5; box-shadow: 0 14px 34px rgba(150, 105, 0, .08); }
+            .answer > div.partiallycorrect { border-color: #c69522; background: #fff4cc; color: #6a4a00; }
+        }
     }
     .submitbtns { align-items: center; gap: 12px; margin-top: 24px; }
 }
@@ -3235,6 +3251,24 @@ $isg-login-stripes-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.or
     color: #706b73;
 }
 
+.isg-module-assessment-list {
+    margin-top: 16px;
+}
+
+.isg-module-assessment-card {
+    border-color: rgba($isg-red-700, 0.16);
+
+    &.is-locked {
+        border-color: #e9e5e5;
+        background: #faf9f9;
+    }
+
+    &.is-complete {
+        border-color: rgba(11, 122, 65, 0.22);
+        background: linear-gradient(180deg, #f7fcf9 0%, #ffffff 100%);
+    }
+}
+
 // ---------------------------------------------------------------
 // Administracao de treinamentos e edicao de avaliacoes.
 // ---------------------------------------------------------------
@@ -4673,7 +4707,7 @@ a.isg-course-card:hover,
 
 @keyframes isg-deco-drift {
     0%, 100% { transform: translate3d(0, 0, 0); }
-    50% { transform: translate3d(8px, -10px, 0); }
+    50% { transform: translate3d(0, -10px, 0); }
 }
 
 // Conteudo principal entra suave a cada pagina.

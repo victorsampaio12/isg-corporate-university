@@ -148,13 +148,15 @@ class block_isgcorpdashboard extends block_base {
     protected function render_courses(): string {
         global $USER;
 
-        $courses = enrol_get_users_courses(
-            $USER->id,
-            true,
-            ['id', 'fullname', 'visible'],
-            'visible DESC'
-        );
-        $courses = array_slice($courses, 0, self::MAXCOURSES, true);
+        $courses = $this->get_continue_learning_courses((int)$USER->id);
+
+        if (empty($courses)) {
+            $enrolledcourses = enrol_get_users_courses((int)$USER->id, true, ['id']);
+            if (!empty($enrolledcourses)) {
+                // The learner has enrolments, but no pending course: everything is complete.
+                return '';
+            }
+        }
 
         $html = '<section class="isg-section">';
         $html .= '<h2 class="isg-section-title">' . get_string('continuelearning', 'block_isgcorpdashboard') . '</h2>';
@@ -167,12 +169,13 @@ class block_isgcorpdashboard extends block_base {
 
         $html .= '<div class="isg-course-grid">';
 
-        foreach ($courses as $course) {
+        foreach ($courses as $item) {
+            $course = $item['course'];
             $progressdata = $this->resolve_course_progress_data($course, (int) $USER->id);
             $percent = $progressdata['percent'];
             $statuslabel = $progressdata['statuslabel'];
             $barclass = $this->resolve_progress_bar_class($progressdata['statusclass']);
-            $courseurl = $this->resolve_course_target_url($course);
+            $courseurl = $this->resolve_course_target_url($course, $item['trilhaid']);
             $barwidth = $percent ?? 0;
 
             $html .= '<a class="isg-course-card isg-dashboard-course-card" href="' . $courseurl->out() . '">';
@@ -198,14 +201,104 @@ class block_isgcorpdashboard extends block_base {
     }
 
     /**
+     * Returns the next pending course from each learning path, preserving the
+     * administrator-defined order of paths and courses.
+     *
+     * @param int $userid
+     * @return array[] Each item contains course and trilhaid.
+     */
+    protected function get_continue_learning_courses(int $userid): array {
+        global $DB;
+
+        $items = [];
+        $seen = [];
+
+        if ($this->ensure_local_isgcorp_loaded()
+                && function_exists('local_isgcorp_get_user_trilhas')
+                && function_exists('local_isgcorp_get_trilha_courses')) {
+            foreach (local_isgcorp_get_user_trilhas($userid) as $trilha) {
+                foreach (local_isgcorp_get_trilha_courses((int)$trilha->id) as $course) {
+                    if (empty($course->visible)
+                            || !is_enrolled(\context_course::instance((int)$course->id), $userid, '', true)) {
+                        continue;
+                    }
+
+                    $progress = $this->resolve_course_progress_data($course, $userid);
+                    if (($progress['percent'] ?? 0) >= 100) {
+                        continue;
+                    }
+
+                    if (!isset($seen[$course->id])) {
+                        $items[] = [
+                            'course' => $course,
+                            'trilhaid' => (int)$trilha->id,
+                        ];
+                        $seen[$course->id] = true;
+                    }
+                    // Only the first incomplete course of each path is actionable.
+                    break;
+                }
+
+                if (count($items) >= self::MAXCOURSES) {
+                    break;
+                }
+            }
+
+            // Standalone courses remain available after the next course from
+            // each path. They do not participate in any path sequence.
+            if (count($items) < self::MAXCOURSES) {
+                $linkedcourseids = array_fill_keys(array_map(
+                    'intval',
+                    $DB->get_fieldset_select('local_isgcorp_trilha_course', 'courseid', '1 = 1')
+                ), true);
+                $enrolledcourses = enrol_get_users_courses(
+                    $userid,
+                    true,
+                    ['id', 'fullname', 'visible'],
+                    'fullname ASC'
+                );
+                foreach ($enrolledcourses as $course) {
+                    if (isset($linkedcourseids[(int)$course->id]) || isset($seen[$course->id])) {
+                        continue;
+                    }
+                    $progress = $this->resolve_course_progress_data($course, $userid);
+                    if (($progress['percent'] ?? 0) >= 100) {
+                        continue;
+                    }
+                    $items[] = ['course' => $course, 'trilhaid' => null];
+                    $seen[$course->id] = true;
+                    if (count($items) >= self::MAXCOURSES) {
+                        break;
+                    }
+                }
+            }
+
+            return $items;
+        }
+
+        // Safe deterministic fallback for installations without local_isgcorp.
+        $courses = enrol_get_users_courses(
+            $userid,
+            true,
+            ['id', 'fullname', 'visible'],
+            'fullname ASC'
+        );
+        foreach (array_slice($courses, 0, self::MAXCOURSES, true) as $course) {
+            $items[] = ['course' => $course, 'trilhaid' => null];
+        }
+
+        return $items;
+    }
+
+    /**
      * Resolve a URL que o card de curso deve abrir no dashboard.
      *
      * @param stdClass $course
      * @return moodle_url
      */
-    protected function resolve_course_target_url(stdClass $course): moodle_url {
+    protected function resolve_course_target_url(stdClass $course, ?int $trilhaid = null): moodle_url {
         if ($this->ensure_local_isgcorp_loaded() && function_exists('local_isgcorp_get_course_page_url')) {
-            return local_isgcorp_get_course_page_url((int) $course->id);
+            return local_isgcorp_get_course_page_url((int)$course->id, $trilhaid);
         }
 
         return new moodle_url('/course/view.php', ['id' => $course->id]);

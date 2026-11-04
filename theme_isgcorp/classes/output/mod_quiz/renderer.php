@@ -10,6 +10,25 @@ defined('MOODLE_INTERNAL') || die();
  */
 class renderer extends \mod_quiz\output\renderer {
     /**
+     * Builds the URL for the custom learner course page.
+     *
+     * @param int $courseid
+     * @return \moodle_url|null
+     */
+    private function custom_course_url(int $courseid): ?\moodle_url {
+        global $CFG;
+
+        $lib = $CFG->dirroot . '/local/isgcorp/lib.php';
+        if (!is_readable($lib)) {
+            return null;
+        }
+
+        require_once($lib);
+        $trail = local_isgcorp_get_trilha_by_courseid($courseid);
+        return local_isgcorp_get_course_page_url($courseid, $trail ? (int)$trail->id : null);
+    }
+
+    /**
      * Uses question-oriented labels instead of Moodle's page terminology.
      */
     protected function attempt_navigation_buttons($page, $lastpage, $navmethod = 'free') {
@@ -44,19 +63,11 @@ class renderer extends \mod_quiz\output\renderer {
      * Returns from the finished review to the custom ISG course page.
      */
     public function finish_review_link(\quiz_attempt $attemptobj) {
-        global $CFG;
-        $lib = $CFG->dirroot . '/local/isgcorp/lib.php';
-        if (is_readable($lib)) {
-            require_once($lib);
-            $courseid = (int)$attemptobj->get_courseid();
-            $assessment = local_isgcorp_get_course_assessment($courseid);
-            if ($assessment && (int)$assessment->id === (int)$attemptobj->get_quizid()) {
-                $trail = local_isgcorp_get_trilha_by_courseid($courseid);
-                $url = local_isgcorp_get_course_page_url($courseid, $trail ? (int)$trail->id : null);
-                return \html_writer::link($url, get_string('backtocustomcourse', 'theme_isgcorp'), [
-                    'class' => 'mod_quiz-next-nav btn btn-primary',
-                ]);
-            }
+        $url = $this->custom_course_url((int)$attemptobj->get_courseid());
+        if ($url) {
+            return \html_writer::link($url, get_string('backtocustomcourse', 'theme_isgcorp'), [
+                'class' => 'mod_quiz-next-nav btn btn-primary',
+            ]);
         }
         return parent::finish_review_link($attemptobj);
     }
@@ -65,17 +76,26 @@ class renderer extends \mod_quiz\output\renderer {
      * Keeps the learner inside the custom ISG course experience.
      */
     public function view_page($course, $quiz, $cm, $context, $viewobj) {
-        global $CFG;
-        $lib = $CFG->dirroot . '/local/isgcorp/lib.php';
-        if (is_readable($lib)) {
-            require_once($lib);
-            $assessment = local_isgcorp_get_course_assessment((int)$course->id);
-            if ($assessment && (int)$assessment->id === (int)$quiz->id) {
-                $trail = local_isgcorp_get_trilha_by_courseid((int)$course->id);
-                $viewobj->backtocourseurl = local_isgcorp_get_course_page_url((int)$course->id, $trail ? (int)$trail->id : null);
-            }
+        $url = $this->custom_course_url((int)$course->id);
+        if ($url) {
+            $viewobj->backtocourseurl = $url;
         }
         return parent::view_page($course, $quiz, $cm, $context, $viewobj);
+    }
+
+    /**
+     * Replaces Moodle's native course URL immediately before rendering the button.
+     *
+     * @param \mod_quiz\output\view_page $viewobj
+     * @return string
+     */
+    public function view_page_buttons(\mod_quiz\output\view_page $viewobj) {
+        $url = $this->custom_course_url((int)$this->page->course->id);
+        if ($url) {
+            $viewobj->backtocourseurl = $url;
+        }
+
+        return parent::view_page_buttons($viewobj);
     }
 
     /**
